@@ -9,11 +9,14 @@ export interface Product {
   scents?: string[];
   moods?: string[];
   limitedEdition?: boolean;
+  /** Candle size e.g. "Large - 2 x 4 cm" */
+  size?: string;
+  /** Deprecated: legacy field kept for backward compatibility */
   sku?: string;
   createdAt?: any;
 }
 
-export type OrderStatus = 'pending_payment' | 'paid' | 'preparing' | 'shipped' | 'completed';
+export type OrderStatus = 'paid' | 'preparing' | 'shipped' | 'completed';
 
 export interface Order {
   id: string;

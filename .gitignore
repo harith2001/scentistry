@@ -25,8 +25,8 @@ Thumbs.db
 firebase-admin-key.json
 
 # Local upload assets (runtime generated)
-public/uploads/*
-!public/uploads/.keep
+# public/uploads/*
+# !public/uploads/.keep
 
 # Coverage / test
 coverage/

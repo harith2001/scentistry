@@ -18,6 +18,10 @@ export default function AdminHome() {
           <h2 className="text-lg font-semibold">Orders</h2>
           <p className="text-sm text-gray-600 mt-1">Filter by status, verify bank slips, update status.</p>
         </Link>
+        <Link href="/admin/customers" className="block p-6 rounded-lg bg-white shadow-sm hover:shadow-md transition">
+          <h2 className="text-lg font-semibold">Customers</h2>
+          <p className="text-sm text-gray-600 mt-1">Search, manage active status and details.</p>
+        </Link>
         <Link href="/admin/analytics" className="block p-6 rounded-lg bg-white shadow-sm hover:shadow-md transition">
           <h2 className="text-lg font-semibold">Analytics</h2>
           <p className="text-sm text-gray-600 mt-1">Totals, revenue, status breakdown, low-stock items.</p>

@@ -69,7 +69,7 @@ export default function AdminProductsPage() {
       </div>
 
       <div className="flex items-center gap-3">
-        <input className="border rounded px-3 py-2 w-64" placeholder="Search title, SKU, scent, mood" value={q} onChange={e => setQ(e.target.value)} />
+        <input className="border rounded px-3 py-2 w-64" placeholder="Search title, size, scent, mood" value={q} onChange={e => setQ(e.target.value)} />
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={limitedOnly} onChange={e => setLimitedOnly(e.target.checked)} /> Limited only
         </label>
@@ -109,7 +109,7 @@ export default function AdminProductsPage() {
                 if (!t) return true;
                 return (
                   (p.title || '').toLowerCase().includes(t) ||
-                  (p.sku || '').toLowerCase().includes(t) ||
+                  ((p.size || p.sku) || '').toLowerCase().includes(t) ||
                   (p.scents || []).some(s => s.toLowerCase().includes(t)) ||
                   (p.moods || []).some(m => m.toLowerCase().includes(t))
                 );
@@ -117,7 +117,7 @@ export default function AdminProductsPage() {
               .map(p => (
               <tr key={p.id} className="border-t">
                 <td className="p-2">{p.title}</td>
-                <td className="p-2 text-right">${p.price?.toFixed?.(2) ?? p.price}</td>
+                <td className="p-2 text-right">LKR {p.price?.toFixed?.(2) ?? p.price}</td>
                 <td className="p-2 text-right">
                   <div className="inline-flex items-center gap-1">
                     <button className="px-2 py-1 border rounded" onClick={() => bulkChangeStock(p.id, -1)}>-</button>

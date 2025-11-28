@@ -17,8 +17,8 @@ export default function ProductCard({ product }: Props) {
         </div>
         <div className="mt-3">
           <h3 className="font-medium line-clamp-1">{product.title}</h3>
-          <div className="text-brand font-semibold">${product.price?.toFixed?.(2) ?? product.price}</div>
-          {product.limitedEdition && <span className="text-xs text-amber-600">Limited edition</span>}
+          <div className="text-brand font-semibold">LKR {product.price?.toFixed?.(2) ?? product.price}</div>
+          {product.limitedEdition && <span className="text-xs text-red-600">Limited edition</span>}
         </div>
       </Link>
       <div className="mt-auto pt-3">

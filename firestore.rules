@@ -11,7 +11,6 @@ service cloud.firestore {
     // Public catalog read
     match /products/{id} {
       allow read: if true;
-      // Writes only by owners in app; most writes go through admin API using Admin SDK
       allow write: if isOwner();
     }
 
@@ -20,14 +19,28 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Orders: anyone can create (guest checkout supported), but only owner can update; users can read their own
+    // Orders: anyone can create (guest checkout), owners manage; users read their own
     match /orders/{orderId} {
       allow create: if true;
       allow read: if isOwner() || (request.auth != null && request.auth.uid == resource.data.userId);
       allow update, delete: if isOwner();
     }
 
-    // Roles: readable by owner or the user themself; not writable from client
+    // Profiles:
+    // - Owners: full read/write/delete for admin Customers module (list and manage users)
+    // - Users: can read/write their own profile (self-service)
+    match /profiles/{uid} {
+      // Read allowed for owner or the user
+      allow read: if isOwner() || (request.auth != null && request.auth.uid == uid);
+
+      // Updates/deletes allowed for owner
+      allow update, delete: if isOwner();
+
+      // Create/update allowed for the user themself (common fields)
+      allow create, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Roles: readable by owner or the user; no client writes
     match /roles/{uid} {
       allow read: if isOwner() || (request.auth != null && request.auth.uid == uid);
       allow write: if false;
@@ -35,6 +48,12 @@ service cloud.firestore {
 
     // Analytics: only owner can read; writes via Admin SDK only
     match /analytics/{doc} {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+
+    // Counters: server-side only (Admin SDK); block client writes, allow owner read
+    match /counters/{docId} {
       allow read: if isOwner();
       allow write: if false;
     }

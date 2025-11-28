@@ -27,6 +27,12 @@ export default function OrderDetailPage() {
   if (loading) return <div>Loading…</div>;
   if (!order) return <div>Order not found.</div>;
 
+  const slipUrl: string | undefined = order.slipPath || order.slipUrl;
+  const slipFileName = (() => {
+    const p = slipUrl || '';
+    try { return decodeURIComponent(p.split('/').pop() || ''); } catch { return p.split('/').pop() || ''; }
+  })();
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -44,14 +50,15 @@ export default function OrderDetailPage() {
         <div className="mt-3 font-semibold">Total: ${order.total?.toFixed?.(2) ?? order.total}</div>
       </div>
 
-      {order.slipUrl && (
+      {slipUrl && (
         <div className="bg-white p-4 rounded-md shadow-sm">
           <div className="font-medium mb-2">Bank Slip</div>
-          {order.slipUrl.endsWith('.pdf') ? (
-            <a className="text-brand" href={order.slipUrl} target="_blank" rel="noreferrer">View PDF</a>
+          <div className="text-sm text-ink/70 mb-2">{slipFileName}</div>
+          {slipUrl.endsWith('.pdf') ? (
+            <a className="text-brand" href={slipUrl} target="_blank" rel="noreferrer">View PDF</a>
           ) : (
             <div className="relative w-full max-w-md aspect-[4/3] bg-gray-100 rounded">
-              <Image src={order.slipUrl} alt="Bank slip" fill className="object-contain" />
+              <Image src={slipUrl} alt="Bank slip" fill className="object-contain" />
             </div>
           )}
         </div>

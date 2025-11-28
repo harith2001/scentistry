@@ -28,7 +28,7 @@ export default function Home() {
     if (!t) return products;
     return products.filter((p: Product) => (
       (p.title || '').toLowerCase().includes(t) ||
-      (p.sku || '').toLowerCase().includes(t) ||
+      (p.size || p.sku || '').toLowerCase().includes(t) ||
       (p.scents || []).some((s: string) => s.toLowerCase().includes(t)) ||
       (p.moods || []).some((m: string) => m.toLowerCase().includes(t))
     ));
@@ -42,7 +42,7 @@ export default function Home() {
         <div className="max-w-xl mx-auto">
           <input
             className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
-            placeholder="Search by name, scent, mood, SKU"
+            placeholder="Search by name, scent, mood, size"
             value={qText}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setQText(e.target.value)}
           />

@@ -1,32 +1,56 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/lib/authContext';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, onSnapshot, orderBy, getCountFromServer } from 'firebase/firestore';
 import { db } from '@/lib/firebaseClient';
 
 export default function AdminAnalyticsPage() {
   const { role, loading } = useAuth();
   const [summary, setSummary] = useState<any>(null);
   const [lowStock, setLowStock] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [customersCount, setCustomersCount] = useState<number>(0);
 
   useEffect(() => {
     const run = async () => {
       if (role !== 'owner') return;
       try {
-        const ref = doc(db, 'analytics', 'summary');
-        const snap = await getDoc(ref);
-        setSummary(snap.exists() ? snap.data() : null);
+        // Live orders snapshot for real-time analytics
+        const qOrders = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+        const unsub = onSnapshot(qOrders, (snap) => {
+          const data = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+          setOrders(data);
+          // derive summary
+          const totalOrders = data.length;
+          const revenueTotal = data.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+          const revenueCompleted = data.filter((o) => o.status === 'completed').reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+          const statusCounts: Record<string, number> = {};
+          for (const o of data) {
+            statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+          }
+          setSummary({ totalOrders, revenueTotal, revenueCompleted, statusCounts });
+        });
 
         const qLow = query(collection(db, 'products'), where('stock', '<', 5));
         const lowSnap = await getDocs(qLow);
         setLowStock(lowSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) })));
+
+        // Customers count box
+        try {
+          const profilesCol = collection(db, 'profiles');
+          const countSnap = await getCountFromServer(profilesCol);
+          setCustomersCount(countSnap.data().count || 0);
+        } catch {}
       } catch (e) { console.error(e); }
     };
     run();
+    return () => {
+      // cleanup handled in inner unsub captured via closure if needed
+    };
   }, [role]);
 
   const statusCounts = useMemo(() => {
     const sc = (summary?.statusCounts || {}) as Record<string, number>;
-    const order = ['pending_payment','paid','preparing','shipped','completed'];
+    const order = ['paid','preparing','shipped','completed'];
     return order.map(s => ({ status: s, count: sc[s] || 0 }));
   }, [summary]);
 
@@ -44,12 +68,17 @@ export default function AdminAnalyticsPage() {
         </div>
         <div className="bg-white rounded-md p-4 shadow-sm">
           <div className="text-sm text-gray-600">Revenue (Total)</div>
-          <div className="text-2xl font-semibold">{summary?.revenueTotal?.toFixed?.(2) ?? '-'}</div>
+          <div className="text-2xl font-semibold">{summary ? `LKR ${summary.revenueTotal?.toFixed?.(2)}` : '-'}</div>
         </div>
         <div className="bg-white rounded-md p-4 shadow-sm">
           <div className="text-sm text-gray-600">Revenue (Completed)</div>
-          <div className="text-2xl font-semibold">{summary?.revenueCompleted?.toFixed?.(2) ?? '-'}</div>
+          <div className="text-2xl font-semibold">{summary ? `LKR ${summary.revenueCompleted?.toFixed?.(2)}` : '-'}</div>
         </div>
+        <a href="/admin/customers" className="bg-white rounded-md p-4 shadow-sm hover:bg-brand/5 transition">
+          <div className="text-sm text-gray-600">Customers</div>
+          <div className="text-2xl font-semibold">{customersCount}</div>
+          <div className="text-xs text-brand mt-1">View all customers</div>
+        </a>
       </div>
 
       <div className="bg-white rounded-md p-4 shadow-sm">

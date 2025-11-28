@@ -28,6 +28,7 @@ export default function Header() {
               <Link href="/admin" className={linkClass(router.pathname === '/admin')}>Dashboard</Link>
               <Link href="/admin/products" className={linkClass(router.pathname === '/admin/products')}>Products</Link>
               <Link href="/admin/orders" className={linkClass(router.pathname === '/admin/orders')}>Orders</Link>
+              <Link href="/admin/customers" className={linkClass(router.pathname === '/admin/customers')}>Customers</Link>
               <Link href="/admin/analytics" className={linkClass(router.pathname === '/admin/analytics')}>Analytics</Link>
             </>
           ) : (

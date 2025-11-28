@@ -12,6 +12,16 @@ if (!getApps().length) {
     adminApp = initializeApp({
       credential: cert({ projectId, clientEmail, privateKey })
     });
+  } else {
+    // Fallback to Application Default Credentials if service account env vars are not set.
+    // Requires GOOGLE_APPLICATION_CREDENTIALS or a runtime with ADC configured.
+    try {
+      adminApp = initializeApp();
+    } catch (e) {
+      // leave adminApp undefined; API routes will return a clear error
+      // eslint-disable-next-line no-console
+      console.error('Firebase Admin initialization failed. Set FIREBASE_* envs or ADC.', e);
+    }
   }
 }
 

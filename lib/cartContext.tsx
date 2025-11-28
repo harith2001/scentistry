@@ -46,7 +46,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(LS_KEY, JSON.stringify(items));
     } else {
       const cartRef = doc(collection(db, 'carts'), user.uid);
-      setDoc(cartRef, { items }, { merge: true });
+      // Firestore does not allow undefined anywhere in the payload; strip them.
+      const safeItems = items.map((i) => ({
+        id: i.id,
+        title: i.title,
+        price: typeof i.price === 'number' ? i.price : Number(i.price) || 0,
+        qty: typeof i.qty === 'number' ? i.qty : Number(i.qty) || 1,
+        ...(i.image ? { image: i.image } : {}),
+      }));
+      try {
+        setDoc(cartRef, { items: safeItems }, { merge: true });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to sync cart', e);
+      }
     }
   }, [items, user]);
 

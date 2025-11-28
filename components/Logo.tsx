@@ -3,16 +3,16 @@ import Link from 'next/link';
 import { useState } from 'react';
 
 type Props = {
-	size?: number; // pixel size for square logo image
-	src?: string; // path to logo image in /public
-	showText?: boolean; // show brand text next to mark
-	tagline?: string; // optional small tagline under brand
+	size?: number; 
+	src?: string; 
+	showText?: boolean; 
+	tagline?: string; 
 	className?: string;
 };
 
 export default function Logo({
 	size = 36,
-	src = '/logo.png',
+	src = '/logo-placeholder.svg',
 	showText = true,
 	tagline,
 	className,
