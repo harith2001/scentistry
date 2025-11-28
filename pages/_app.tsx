@@ -12,7 +12,9 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       <CartProvider>
         <Head>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>Scentistry</title>
+          <title>Scentistry • Premium Candles</title>
+          <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+          <link rel="alternate icon" href="/logo.svg" />
         </Head>
         <div className="min-h-screen flex flex-col bg-ivory text-ink">
           <Header />

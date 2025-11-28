@@ -44,7 +44,7 @@ export default function CartPage() {
       <div className="bg-white rounded-md p-4 shadow-sm h-fit">
         <div className="flex justify-between font-medium">
           <span>Subtotal</span>
-          <span>${total.toFixed(2)}</span>
+          <span>LKR.{total.toFixed(2)}</span>
         </div>
         <Link href="/checkout" className="block mt-4 bg-brand text-white text-center rounded-md py-2 hover:bg-brand/90">Checkout</Link>
       </div>
