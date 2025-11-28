@@ -1,0 +1,21 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Public read of product images
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if false; // upload via admin only
+    }
+
+    // Bank transfer slips: allow authenticated uploads, owner can read
+    match /slips/{allPaths=**} {
+      allow write: if request.auth != null; // user uploads their slip
+      allow read: if false; // default no read from storage; app shares a signed URL via Firestore
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/roles/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/roles/$(request.auth.uid)).data.role == 'owner';
+    }
+
+    // Public catalog read
+    match /products/{id} {
+      allow read: if true;
+      // Writes only by owners in app; most writes go through admin API using Admin SDK
+      allow write: if isOwner();
+    }
+
+    // Each user can read/write their own cart
+    match /carts/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Orders: anyone can create (guest checkout supported), but only owner can update; users can read their own
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read: if isOwner() || (request.auth != null && request.auth.uid == resource.data.userId);
+      allow update, delete: if isOwner();
+    }
+
+    // Roles: readable by owner or the user themself; not writable from client
+    match /roles/{uid} {
+      allow read: if isOwner() || (request.auth != null && request.auth.uid == uid);
+      allow write: if false;
+    }
+
+    // Analytics: only owner can read; writes via Admin SDK only
+    match /analytics/{doc} {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+  }
+}
