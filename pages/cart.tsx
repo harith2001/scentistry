@@ -24,7 +24,7 @@ export default function CartPage() {
             </div>
             <div className="flex-1">
               <div className="font-medium">{it.title}</div>
-              <div className="text-sm text-gray-500">${it.price.toFixed(2)}</div>
+              <div className="text-sm text-gray-500">LKR.{it.price.toFixed(2)}</div>
               <div className="mt-2 flex items-center gap-2">
                 <button className="px-2 py-1 border rounded" onClick={() => setQty(it.id, Math.max(1, it.qty - 1))}>-</button>
                 <input

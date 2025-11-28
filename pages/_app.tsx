@@ -59,7 +59,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
             </div>
           </footer>
         </div>
-        <Toaster position="top-right" />
+        <Toaster position="bottom-center" />
       </CartProvider>
     </AuthProvider>
   );
