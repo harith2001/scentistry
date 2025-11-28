@@ -14,9 +14,10 @@ async function getDefault(): Promise<AnalyticsData> {
 }
 
 export async function onOrderCreated(status: string, total: number) {
-  if (!adminDb) return;
-  await adminDb.runTransaction(async (tx) => {
-    const ref = adminDb.collection('analytics').doc(ANALYTICS_DOC);
+  const db = adminDb;
+  if (!db) return;
+  await db.runTransaction(async (tx) => {
+    const ref = db.collection('analytics').doc(ANALYTICS_DOC);
     const snap = await tx.get(ref);
     const data: AnalyticsData = snap.exists ? (snap.data() as any) : await getDefault();
     data.totalOrders += 1;
@@ -27,9 +28,10 @@ export async function onOrderCreated(status: string, total: number) {
 }
 
 export async function onOrderStatusChanged(oldStatus: string, newStatus: string, total: number) {
-  if (!adminDb) return;
-  await adminDb.runTransaction(async (tx) => {
-    const ref = adminDb.collection('analytics').doc(ANALYTICS_DOC);
+  const db = adminDb;
+  if (!db) return;
+  await db.runTransaction(async (tx) => {
+    const ref = db.collection('analytics').doc(ANALYTICS_DOC);
     const snap = await tx.get(ref);
     const data: AnalyticsData = snap.exists ? (snap.data() as any) : await getDefault();
     if (oldStatus) {

@@ -20,6 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!snap.exists) return res.status(404).json({ error: 'Order not found' });
     const data = snap.data() || {};
 
+    const oldStatus = (data.status as string) || '';
     await ref.update({ status, updatedAt: new Date().toISOString() });
 
     // Send email if customer email exists
