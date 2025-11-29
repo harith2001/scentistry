@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/lib/authContext';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebaseClient';
@@ -15,16 +15,38 @@ export default function AdminOrdersPage() {
   const [filter, setFilter] = useState<string>('');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTotal, setEditTotal] = useState<string>('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const pageSize = 10;
 
   useEffect(() => {
     if (role !== 'owner') return;
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
+    const prevStatuses = prevStatusesRef.current;
     const unsub = onSnapshot(q, (snap) => {
-      setOrders(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as any);
+      const next = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as any as OrderRow[];
+      // Detect status changes vs previous snapshot
+      const changes: { code: string; from: string; to: string }[] = [];
+      next.forEach(o => {
+        const prev = prevStatuses[o.id];
+        if (prev && prev !== o.status) {
+          changes.push({ code: o.code, from: prev, to: o.status });
+        }
+        // update ref map
+        prevStatuses[o.id] = o.status;
+      });
+      setOrders(next);
+      // Fire toasts for changes (skip initial load by requiring prev value)
+      changes.forEach(c => {
+        toast.success(`Order ${c.code} status: ${c.to}`);
+      });
     });
     return () => unsub();
   }, [role]);
+
+  // Track previous statuses across snapshots
+  const prevStatusesRef = useRef<Record<string, string>>({});
 
   if (loading) return <div>Loading…</div>;
   if (role !== 'owner') return <div>Unauthorized</div>;
@@ -43,6 +65,63 @@ export default function AdminOrdersPage() {
       toast.error('Status update failed');
     }
   };
+
+  const startEdit = (o: OrderRow) => {
+    setEditingId(o.id);
+    setEditTotal(String(o.total ?? ''));
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditTotal('');
+  };
+
+  const saveEdit = async (o: OrderRow) => {
+    try {
+      const num = parseFloat(editTotal);
+      if (Number.isNaN(num)) return toast.error('Invalid total');
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/orders/edit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ orderId: o.id, total: num })
+      });
+      if (!res.ok) throw new Error('Edit failed');
+      toast.success('Order updated');
+      cancelEdit();
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || 'Update failed');
+    }
+  };
+
+  const requestDelete = (o: OrderRow) => {
+    setConfirmDeleteId(o.id);
+  };
+
+  const performDelete = async () => {
+    if (!confirmDeleteId) return;
+    const o = orders.find(x => x.id === confirmDeleteId);
+    if (!o) { setConfirmDeleteId(null); return; }
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/orders/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ orderId: o.id })
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      toast.success(`Order ${o.code} deleted`);
+      if (editingId === o.id) cancelEdit();
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message || 'Delete failed');
+    } finally {
+      setConfirmDeleteId(null);
+    }
+  };
+
+  const cancelDelete = () => setConfirmDeleteId(null);
 
   const filtered = orders
     .filter(o => !filter || o.status === filter)
@@ -112,8 +191,13 @@ export default function AdminOrdersPage() {
                     return url.endsWith('.pdf') ? (
                       <a href={url} target="_blank" rel="noreferrer" className="text-brand">PDF</a>
                     ) : (
-                      <div className="relative w-24 h-24 bg-gray-100 rounded">
-                        <Image src={url} alt={o.code} fill className="object-cover rounded" />
+                      <div className="relative w-24 h-24 bg-gray-100 rounded overflow-hidden">
+                        {String(url).startsWith('http') ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={String(url)} alt={o.code} className="w-full h-full object-cover" />
+                        ) : (
+                          <Image src={url} alt={o.code} fill className="object-cover rounded" />
+                        )}
                       </div>
                     );
                   })()}
@@ -122,16 +206,54 @@ export default function AdminOrdersPage() {
                   <select className="border rounded px-2 py-1 w-full mb-1" value={o.status} onChange={e => updateStatus(o, e.target.value)}>
                     {STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  <button className="text-xs text-brand" onClick={() => updateStatus(o, 'completed')}>Mark completed</button>
+                  <div className="space-x-2 mb-2">
+                    <button className="text-xs text-brand" onClick={() => updateStatus(o, 'completed')}>Complete</button>
+                    {editingId !== o.id && (
+                      <button className="text-xs text-blue-600" onClick={() => startEdit(o)}>Edit</button>
+                    )}
+                    <button className="text-xs text-red-600" onClick={() => requestDelete(o)}>Delete</button>
+                  </div>
+                  {editingId === o.id && (
+                    <div className="space-y-1 border-t pt-2">
+                      <label className="block text-xs text-gray-600">Total (LKR)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={editTotal}
+                        onChange={e => setEditTotal(e.target.value)}
+                        className="border rounded px-2 py-1 w-full text-xs"
+                      />
+                      <div className="flex gap-2">
+                        <button onClick={() => saveEdit(o)} className="px-2 py-1 text-xs bg-brand text-white rounded">Save</button>
+                        <button onClick={cancelEdit} className="px-2 py-1 text-xs border rounded">Cancel</button>
+                      </div>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td className="p-3 text-gray-500" colSpan={5}>No orders.</td></tr>
+              <tr><td className="p-3 text-gray-500" colSpan={6}>No orders.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+      {confirmDeleteId && (() => {
+        const o = orders.find(x => x.id === confirmDeleteId);
+        if (!o) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white w-full max-w-sm rounded shadow-lg p-5 space-y-4 animate-fade-in">
+              <h2 className="text-lg font-semibold">Delete Order</h2>
+              <p className="text-sm text-gray-700">Are you sure you want to delete <span className="font-mono font-semibold">{o.code}</span>? This action cannot be undone.</p>
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={cancelDelete} className="px-4 py-2 text-sm border rounded">Cancel</button>
+                <button onClick={performDelete} className="px-4 py-2 text-sm bg-red-600 text-white rounded">Delete</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

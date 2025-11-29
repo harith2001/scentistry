@@ -1,9 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { verifyAny } from '@/lib/serverAuth';
+import { strictWriteRateLimit } from '@/lib/rateLimit';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!(await strictWriteRateLimit(req, res))) return; // limit customer code assignments
   if (!adminDb) return res.status(500).json({ error: 'Server not configured' });
   const dbAdmin = adminDb;
 

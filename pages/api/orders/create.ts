@@ -5,6 +5,8 @@ import fs from 'fs';
 import path from 'path';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { verifyAny } from '@/lib/serverAuth';
+import { put } from '@vercel/blob';
+import { strictWriteRateLimit } from '@/lib/rateLimit';
 
 export const config = { api: { bodyParser: false } };
 
@@ -12,14 +14,7 @@ const tmpDir = path.join(process.cwd(), 'public', 'uploads');
 if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
 
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (_req: any, _file: any, cb: any) => cb(null, tmpDir),
-    filename: (_req: any, file: any, cb: any) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      const base = Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-      cb(null, `${base}${ext}`);
-    }
-  }),
+  storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req: any, file: any, cb: any) => {
     const ok = ['.png', '.jpg', '.jpeg', '.pdf'];
@@ -31,6 +26,7 @@ const upload = multer({
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!(await strictWriteRateLimit(req, res))) return; // rate limit order creation uploads
   if (!adminDb) return res.status(500).json({ error: 'Server not configured for admin database access' });
   const dbAdmin = adminDb;
 
@@ -68,13 +64,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         code = result.code;
       }
 
-      // Move/rename file to slips folder using order code
-      const slipsDir = path.join(process.cwd(), 'public', 'uploads', 'slips');
-      if (!fs.existsSync(slipsDir)) fs.mkdirSync(slipsDir, { recursive: true });
+      // Upload slip to Vercel Blob using order code as filename
       const ext = path.extname(file.originalname).toLowerCase();
-      const targetPath = path.join(slipsDir, `${code}${ext}`);
-      fs.renameSync(file.path, targetPath);
-      const relativePath = `/uploads/slips/${code}${ext}`;
+      const key = `slips/${code}${ext}`;
+      const result = await put(key, file.buffer, {
+        access: 'public',
+        contentType: file.mimetype || (ext === '.pdf' ? 'application/pdf' : 'application/octet-stream')
+      });
+      const blobUrl = result.url;
 
       // Create the order document
       const orderRef = await dbAdmin.collection('orders').add({
@@ -83,13 +80,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         total,
         customer,
         gift,
-        slipPath: relativePath,
+        slipUrl: blobUrl,
+        slipPath: blobUrl,
         code,
         status: 'paid',
         createdAt: new Date(),
       });
 
-      return res.status(200).json({ id: orderRef.id, code, slipPath: relativePath });
+      return res.status(200).json({ id: orderRef.id, code, slipUrl: blobUrl });
     } catch (e: any) {
       console.error(e);
       return res.status(500).json({ error: e.message || 'Failed to create order' });

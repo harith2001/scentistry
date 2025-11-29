@@ -81,7 +81,12 @@ export default function ProductDetail() {
             {(product.images ?? [product.images?.[0]]).filter(Boolean).map((img, idx) => (
               <div key={idx} className="relative shrink-0 w-full h-full">
                 {img && (
-                  <Image src={img} alt={`${product.title} ${idx + 1}`} fill className="object-cover" />
+                  String(img).startsWith('http') ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={String(img)} alt={`${product.title} ${idx + 1}`} className="absolute inset-0 w-full h-full object-cover" />
+                  ) : (
+                    <Image src={String(img)} alt={`${product.title} ${idx + 1}`} fill className="object-cover" />
+                  )
                 )}
               </div>
             ))}
@@ -127,7 +132,12 @@ export default function ProductDetail() {
                 onClick={() => setCurrent(i)}
                 className={`relative w-16 h-16 rounded overflow-hidden border ${i === current ? 'border-brand' : 'border-transparent'}`}
               >
-                <Image src={img} alt={`thumb ${i + 1}`} fill className="object-cover" />
+                {String(img).startsWith('http') ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={String(img)} alt={`thumb ${i + 1}`} className="w-full h-full object-cover" />
+                ) : (
+                  <Image src={String(img)} alt={`thumb ${i + 1}`} fill className="object-cover" />
+                )}
               </button>
             ))}
           </div>

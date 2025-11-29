@@ -10,9 +10,15 @@ export default function ProductCard({ product }: Props) {
   return (
     <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 flex flex-col">
       <Link href={`/product/${product.id}`} className="block">
-        <div className="relative w-full h-48 bg-gray-100 rounded">
+        <div className="relative w-full h-48 bg-gray-100 rounded overflow-hidden">
           {product.images?.[0] && (
-            <Image src={product.images[0]} alt={product.title} fill className="object-cover rounded" />
+            String(product.images[0]).startsWith('http') ? (
+              // Render remote blob URL via img to avoid domain config
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+            ) : (
+              <Image src={product.images[0]} alt={product.title} fill className="object-cover rounded" />
+            )
           )}
         </div>
         <div className="mt-3">

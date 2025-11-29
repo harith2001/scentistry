@@ -3,11 +3,13 @@ import { adminDb } from '@/lib/firebaseAdmin';
 import { sendOrderStatusEmail } from '@/lib/email';
 import { verifyOwner } from '@/lib/serverAuth';
 import { onOrderStatusChanged } from '@/lib/analytics';
+import { strictWriteRateLimit } from '@/lib/rateLimit';
 
 // Basic API for updating order status and sending email.
 // NOTE: For production secure with ID token verification and role lookup.
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!(await strictWriteRateLimit(req, res))) return; // rate limit status updates
   const auth = await verifyOwner(req);
   if (!auth) return res.status(401).json({ error: 'Unauthorized' });
   try {

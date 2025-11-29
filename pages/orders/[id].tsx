@@ -57,8 +57,13 @@ export default function OrderDetailPage() {
           {slipUrl.endsWith('.pdf') ? (
             <a className="text-brand" href={slipUrl} target="_blank" rel="noreferrer">View PDF</a>
           ) : (
-            <div className="relative w-full max-w-md aspect-[4/3] bg-gray-100 rounded">
-              <Image src={slipUrl} alt="Bank slip" fill className="object-contain" />
+            <div className="relative w-full max-w-md aspect-[4/3] bg-gray-100 rounded overflow-hidden">
+              {String(slipUrl).startsWith('http') ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={String(slipUrl)} alt="Bank slip" className="w-full h-full object-contain" />
+              ) : (
+                <Image src={slipUrl} alt="Bank slip" fill className="object-contain" />
+              )}
             </div>
           )}
         </div>

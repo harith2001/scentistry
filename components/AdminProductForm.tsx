@@ -102,7 +102,7 @@ export default function AdminProductForm({ existing, onDone }: Props) {
       });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      setUploaded((prev) => [...prev, data.path]);
+      setUploaded((prev) => [...prev, data.url || data.path]);
       toast.success("Image uploaded");
       e.target.value = "";
     } catch (err: any) {
