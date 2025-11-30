@@ -47,7 +47,7 @@ export default function Header() {
             </>
           )}
           {user ? (
-            <UserMenu onLogout={async () => { await signOut(auth); router.push('/auth/login'); }} email={user.email || ''} photoURL={user.photoURL || ''} displayName={user.displayName || ''} />
+            <UserMenu onLogout={async () => { try { await fetch('/api/auth/session', { method: 'DELETE' }); } catch {} await signOut(auth); router.push('/auth/login'); }} email={user.email || ''} photoURL={user.photoURL || ''} displayName={user.displayName || ''} />
           ) : (
             <Link href="/auth/login" className="text-white bg-brand/90 hover:bg-brand rounded-md px-3 py-1 shadow-sm">Login</Link>
           )}

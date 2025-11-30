@@ -9,9 +9,12 @@ export interface DecodedTokenWithRole {
 export async function verifyOwner(req: any): Promise<DecodedTokenWithRole | null> {
   try {
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    if (!token || !adminAuth || !adminDb) return null;
-    const decoded = await adminAuth.verifyIdToken(token);
+    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const cookieToken = req.cookies?.__session || null;
+    if ((!bearer && !cookieToken) || !adminAuth || !adminDb) return null;
+    const decoded = cookieToken
+      ? await adminAuth.verifySessionCookie(cookieToken, true)
+      : await adminAuth.verifyIdToken(bearer as string);
     const roleSnap = await adminDb.collection('roles').doc(decoded.uid).get();
     const role = roleSnap.exists ? (roleSnap.data()?.role as string) : 'customer';
     if (role !== 'owner') return null;
@@ -25,9 +28,12 @@ export async function verifyOwner(req: any): Promise<DecodedTokenWithRole | null
 export async function verifyAny(req: any): Promise<DecodedTokenWithRole | null> {
   try {
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
-    if (!token || !adminAuth || !adminDb) return null;
-    const decoded = await adminAuth.verifyIdToken(token);
+    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    const cookieToken = req.cookies?.__session || null;
+    if ((!bearer && !cookieToken) || !adminAuth || !adminDb) return null;
+    const decoded = cookieToken
+      ? await adminAuth.verifySessionCookie(cookieToken, true)
+      : await adminAuth.verifyIdToken(bearer as string);
     const roleSnap = await adminDb.collection('roles').doc(decoded.uid).get();
     const role = roleSnap.exists ? (roleSnap.data()?.role as string) : 'customer';
     return { uid: decoded.uid, role, email: decoded.email };

@@ -44,6 +44,7 @@ export default function Register() {
       if (cred.user) {
         await updateProfile(cred.user, { displayName: nameTrim });
         await setDoc(doc(db, 'profiles', cred.user.uid), {
+          customerCode: '',
           fullName: nameTrim,
           email: emailTrim.toLowerCase(),
           phone: '',
@@ -54,6 +55,23 @@ export default function Register() {
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         }, { merge: true });
+        // Assign a unique customer code via the backend API
+        try {
+          await fetch('/api/customers/assign-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: cred.user.uid }),
+          });
+        } catch {}
+        // Set secure server-side session cookie
+        try {
+          const idToken = await cred.user.getIdToken();
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken, expiresInDays: 7 }),
+          });
+        } catch {}
         try {
           await sendEmailVerification(cred.user);
           toast.success('Account created. Verification email sent.');

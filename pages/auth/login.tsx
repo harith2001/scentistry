@@ -35,6 +35,17 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const cred = await signInWithEmailAndPassword(auth, emailTrim, passwordTrim);
+      // Set secure server-side session cookie
+      try {
+        const idToken = await cred.user.getIdToken();
+        await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, expiresInDays: 7 }),
+        });
+      } catch (err) {
+        console.error('Failed to set session cookie', err);
+      }
       // Immediately look up role using localId (uid)
       let r: Role = 'customer';
       const uid = cred.user?.uid || auth.currentUser?.uid;

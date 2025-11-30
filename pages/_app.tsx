@@ -39,7 +39,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
                   <div>
                     <div className="font-medium mb-2">Explore</div>
                     <ul className="space-y-1 text-sm">
-                      <li><a className="hover:underline" href="/">Catalog</a></li>
+                      <li><a className="hover:underline" href="/">Home</a></li>
                       <li><a className="hover:underline" href="/orders">My Orders</a></li>
                       <li><a className="hover:underline" href="/cart">Cart</a></li>
                     </ul>
