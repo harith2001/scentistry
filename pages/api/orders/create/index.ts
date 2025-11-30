@@ -10,9 +10,6 @@ import { strictWriteRateLimit } from '@/lib/rateLimit';
 
 export const config = { api: { bodyParser: false } };
 
-const tmpDir = path.join(process.cwd(), 'public', 'uploads');
-if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
