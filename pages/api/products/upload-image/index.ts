@@ -7,12 +7,6 @@ import { verifyOwner } from '@/lib/serverAuth';
 import { put } from '@vercel/blob';
 import { strictWriteRateLimit } from '@/lib/rateLimit';
 
-// Ensure upload directory exists
-const uploadDir = path.join(process.cwd(), 'public', 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
 // Use memory storage; upload to Vercel Blob instead of local disk
 const storage = multer.memoryStorage();
 
