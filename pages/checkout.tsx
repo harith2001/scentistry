@@ -70,6 +70,46 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (items.length === 0) { toast.error('Cart is empty'); return; }
 
+    // Validate required fields
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const missing: string[] = [];
+    const c = {
+      fullName: customer.fullName.trim(),
+      phone: customer.phone.trim(),
+      email: customer.email.trim(),
+      address: customer.address.trim(),
+      postalCode: customer.postalCode.trim(),
+      city: customer.city.trim(),
+    };
+    if (!c.fullName) missing.push('Full name');
+    if (!c.phone) missing.push('Phone');
+    if (!c.email) missing.push('Email');
+    if (!c.address) missing.push('Address');
+    if (!c.postalCode) missing.push('Postal code');
+    if (!c.city) missing.push('City');
+    if (missing.length) { toast.error(`Please fill: ${missing.join(', ')}`); return; }
+    if (!emailRegex.test(c.email)) { toast.error('Enter a valid email address'); return; }
+
+    if (giftEnabled) {
+      const gr = {
+        fullName: recipient.fullName.trim(),
+        phone: recipient.phone.trim(),
+        email: recipient.email.trim(),
+        address: recipient.address.trim(),
+        postalCode: recipient.postalCode.trim(),
+        city: recipient.city.trim(),
+      };
+      const gMissing: string[] = [];
+      if (!gr.fullName) gMissing.push('Recipient name');
+      if (!gr.phone) gMissing.push('Recipient phone');
+      if (!gr.email) gMissing.push('Recipient email');
+      if (!gr.address) gMissing.push('Recipient address');
+      if (!gr.postalCode) gMissing.push('Recipient postal code');
+      if (!gr.city) gMissing.push('Recipient city');
+      if (gMissing.length) { toast.error(`Please fill: ${gMissing.join(', ')}`); return; }
+      if (!emailRegex.test(gr.email)) { toast.error('Enter a valid recipient email'); return; }
+    }
+
     if (slip) {
       if (!ALLOWED_SLIP_TYPES.includes(slip.type)) { toast.error('Invalid file type. Use PNG, JPG, or PDF.'); return; }
       if (slip.size > MAX_SLIP_SIZE) { toast.error('File too large (max 10MB).'); return; }
@@ -148,14 +188,32 @@ console.log('Rerender checkout page', orderCode);
 
           <div>
             <div className="font-medium mb-2">Your Details</div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <input className="border rounded px-3 py-2" placeholder="Full name" value={customer.fullName} onChange={e => setCustomer({ ...customer, fullName: e.target.value })} />
-              <input className="border rounded px-3 py-2" placeholder="Phone" value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })} />
-              <input className="border rounded px-3 py-2 sm:col-span-2" placeholder="Email" type="email" value={customer.email} onChange={e => setCustomer({ ...customer, email: e.target.value })} />
-              <input className="border rounded px-3 py-2 sm:col-span-2" placeholder="Address" value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
-              <input className="border rounded px-3 py-2" placeholder="Postal code" value={customer.postalCode} onChange={e => setCustomer({ ...customer, postalCode: e.target.value })} />
-              <input className="border rounded px-3 py-2" placeholder="City" value={customer.city} onChange={e => setCustomer({ ...customer, city: e.target.value })} />
-            </div>
+            <form className="grid sm:grid-cols-2 gap-3" aria-labelledby="your-details" noValidate>
+              <div>
+                <label className="block text-sm text-ink/80 mb-1">Full name <span className="text-red-600">*</span></label>
+                <input className="border rounded px-3 py-2 w-full" placeholder="Full name" value={customer.fullName} onChange={e => setCustomer({ ...customer, fullName: e.target.value })} required aria-required="true" />
+              </div>
+              <div>
+                <label className="block text-sm text-ink/80 mb-1">Phone <span className="text-red-600">*</span></label>
+                <input className="border rounded px-3 py-2 w-full" placeholder="Phone" value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })} required aria-required="true" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm text-ink/80 mb-1">Email <span className="text-red-600">*</span></label>
+                <input className="border rounded px-3 py-2 w-full" placeholder="Email" type="email" value={customer.email} onChange={e => setCustomer({ ...customer, email: e.target.value })} required aria-required="true" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm text-ink/80 mb-1">Address <span className="text-red-600">*</span></label>
+                <input className="border rounded px-3 py-2 w-full" placeholder="Address" value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} required aria-required="true" />
+              </div>
+              <div>
+                <label className="block text-sm text-ink/80 mb-1">Postal code <span className="text-red-600">*</span></label>
+                <input className="border rounded px-3 py-2 w-full" placeholder="Postal code" value={customer.postalCode} onChange={e => setCustomer({ ...customer, postalCode: e.target.value })} required aria-required="true" />
+              </div>
+              <div>
+                <label className="block text-sm text-ink/80 mb-1">City <span className="text-red-600">*</span></label>
+                <input className="border rounded px-3 py-2 w-full" placeholder="City" value={customer.city} onChange={e => setCustomer({ ...customer, city: e.target.value })} required aria-required="true" />
+              </div>
+            </form>
           </div>
 
           <div>
@@ -165,19 +223,40 @@ console.log('Rerender checkout page', orderCode);
             </label>
             {giftEnabled && (
               <div className="grid sm:grid-cols-2 gap-3 mt-3">
-                <input className="border rounded px-3 py-2" placeholder="Recipient name" value={recipient.fullName} onChange={e => setRecipient({ ...recipient, fullName: e.target.value })} />
-                <input className="border rounded px-3 py-2" placeholder="Phone" value={recipient.phone} onChange={e => setRecipient({ ...recipient, phone: e.target.value })} />
-                <input className="border rounded px-3 py-2 sm:col-span-2" placeholder="Email" type="email" value={recipient.email} onChange={e => setRecipient({ ...recipient, email: e.target.value })} />
-                <input className="border rounded px-3 py-2 sm:col-span-2" placeholder="Address" value={recipient.address} onChange={e => setRecipient({ ...recipient, address: e.target.value })} />
-                <input className="border rounded px-3 py-2" placeholder="Postal code" value={recipient.postalCode} onChange={e => setRecipient({ ...recipient, postalCode: e.target.value })} />
-                <input className="border rounded px-3 py-2" placeholder="City" value={recipient.city} onChange={e => setRecipient({ ...recipient, city: e.target.value })} />
-                <textarea className="border rounded px-3 py-2 sm:col-span-2" rows={3} placeholder="Gift note (optional)" value={recipient.note} onChange={e => setRecipient({ ...recipient, note: e.target.value })} />
+                <div>
+                  <label className="block text-sm text-ink/80 mb-1">Recipient name <span className="text-red-600">*</span></label>
+                  <input className="border rounded px-3 py-2 w-full" placeholder="Recipient name" value={recipient.fullName} onChange={e => setRecipient({ ...recipient, fullName: e.target.value })} required={giftEnabled} aria-required={giftEnabled} />
+                </div>
+                <div>
+                  <label className="block text-sm text-ink/80 mb-1">Phone <span className="text-red-600">*</span></label>
+                  <input className="border rounded px-3 py-2 w-full" placeholder="Phone" value={recipient.phone} onChange={e => setRecipient({ ...recipient, phone: e.target.value })} required={giftEnabled} aria-required={giftEnabled} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm text-ink/80 mb-1">Email <span className="text-red-600">*</span></label>
+                  <input className="border rounded px-3 py-2 w-full" placeholder="Email" type="email" value={recipient.email} onChange={e => setRecipient({ ...recipient, email: e.target.value })} required={giftEnabled} aria-required={giftEnabled} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm text-ink/80 mb-1">Address <span className="text-red-600">*</span></label>
+                  <input className="border rounded px-3 py-2 w-full" placeholder="Address" value={recipient.address} onChange={e => setRecipient({ ...recipient, address: e.target.value })} required={giftEnabled} aria-required={giftEnabled} />
+                </div>
+                <div>
+                  <label className="block text-sm text-ink/80 mb-1">Postal code <span className="text-red-600">*</span></label>
+                  <input className="border rounded px-3 py-2 w-full" placeholder="Postal code" value={recipient.postalCode} onChange={e => setRecipient({ ...recipient, postalCode: e.target.value })} required={giftEnabled} aria-required={giftEnabled} />
+                </div>
+                <div>
+                  <label className="block text-sm text-ink/80 mb-1">City <span className="text-red-600">*</span></label>
+                  <input className="border rounded px-3 py-2 w-full" placeholder="City" value={recipient.city} onChange={e => setRecipient({ ...recipient, city: e.target.value })} required={giftEnabled} aria-required={giftEnabled} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm text-ink/80 mb-1">Gift note <span className="text-ink/50">(optional)</span></label>
+                  <textarea className="border rounded px-3 py-2 w-full" rows={3} placeholder="Gift note (optional)" value={recipient.note} onChange={e => setRecipient({ ...recipient, note: e.target.value })} />
+                </div>
               </div>
             )}
           </div>
 
           <div>
-            <div className="font-medium mb-2">Bank Transfer Slip</div>
+            <div className="font-medium mb-2">Bank Transfer Slip <span className="text-red-600">*</span></div>
             <label className="inline-flex items-center gap-2 px-4 py-2 border rounded cursor-pointer bg-white hover:bg-brand/10 text-ink">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-brand">
                 <path fillRule="evenodd" d="M3 4.5A1.5 1.5 0 014.5 3h11A1.5 1.5 0 0117 4.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 15.5v-11zm5 1a.5.5 0 00-.5.5v3H6a.5.5 0 000 1h1.5v3a.5.5 0 001 0v-3H10a.5.5 0 000-1H8.5v-3a.5.5 0 00-.5-.5z" clipRule="evenodd" />
