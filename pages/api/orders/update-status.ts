@@ -26,9 +26,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await ref.update({ status, updatedAt: new Date().toISOString() });
 
     // Send email if customer email exists
-    const email = (data.customer?.email as string) || '';
-    const code = data.code as string;
-    if (email) await sendOrderStatusEmail(email, code, status);
+    // const email = (data.customer?.email as string) || '';
+    // const code = data.code as string;
+    // if (email) await sendOrderStatusEmail(email, code, status);
     const total = (data.total as number) || 0;
     await onOrderStatusChanged(oldStatus, status, total);
 

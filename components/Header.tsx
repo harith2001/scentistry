@@ -33,7 +33,7 @@ export default function Header() {
             </>
           ) : (
             <>
-              <Link href="/" className={linkClass(router.pathname === '/')}>Catalog</Link>
+              <Link href="/" className={linkClass(router.pathname === '/')}>Home</Link>
               <Link href="/orders" className={linkClass(router.pathname.startsWith('/orders'))}>Orders</Link>
               {role === 'owner' && <Link href="/admin" className="text-brand font-medium">Admin</Link>}
               <Link href="/cart" className={linkClass(router.pathname === '/cart')}>
