@@ -3,6 +3,8 @@ import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebaseClient';
 import ProductCard from '@/components/ProductCard';
 import { Product } from '@/types';
+import Hero from '@/components/Hero';
+import SectionHeading from '@/components/ui/SectionHeading';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -35,13 +37,14 @@ export default function Home() {
   }, [products, qText]);
 
   return (
-    <div className="space-y-6">
-      <section className="text-center space-y-2">
-        <h1 className="text-3xl font-bold">Scentistry Candles</h1>
-        <p className="text-gray-600">Premium candles crafted by mood and scent.</p>
+    <div className="space-y-8">
+      <Hero />
+
+      <section className="text-center space-y-4">
+        <SectionHeading title="Our Collection" subtitle="Refined scents for a calm, minimalist lifestyle." />
         <div className="max-w-xl mx-auto">
           <input
-            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand"
+            className="w-full border border-gold/30 rounded-2xl px-4 py-3 focus:outline-none focus:ring-0 focus:border-gold/60 shadow-soft"
             placeholder="Search by name, scent, mood, size"
             value={qText}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setQText(e.target.value)}
@@ -50,14 +53,14 @@ export default function Home() {
       </section>
 
       {loading ? (
-        <div className="text-center text-gray-500">Loading Home</div>
+        <div className="text-center text-black/60">Loading Home</div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div id="products" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filtered.map(p => (
             <ProductCard key={p.id} product={p} />
           ))}
           {filtered.length === 0 && (
-            <div className="col-span-full text-center text-gray-500">No products found.</div>
+            <div className="col-span-full text-center text-black/60">No products found.</div>
           )}
         </div>
       )}

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Product } from '@/types';
 import { useCart } from '@/lib/cartContext';
 import toast from 'react-hot-toast';
+import Button from '@/components/ui/Button';
 
 export default function ProductDetail() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function ProductDetail() {
   return (
     <div className="grid gap-8 md:grid-cols-2">
       <div>
-        <div className="relative w-full aspect-square bg-gray-100 rounded overflow-hidden select-none">
+        <div className="relative w-full aspect-square bg-black/[0.03] rounded-3xl overflow-hidden select-none border border-gold/15 shadow-soft">
           {/* Slides */}
           <div
             className="absolute inset-0 flex transition-transform duration-300"
@@ -95,7 +96,7 @@ export default function ProductDetail() {
           {/* Prev/Next Controls */}
           <button
             aria-label="Previous image"
-            className="absolute top-1/2 -translate-y-1/2 left-2 bg-white/80 hover:bg-white text-ink rounded-full w-9 h-9 grid place-items-center shadow"
+            className="absolute top-1/2 -translate-y-1/2 left-3 bg-white/90 hover:bg-white text-black rounded-full w-10 h-10 grid place-items-center shadow-soft ring-1 ring-gold/30"
             onClick={() => setCurrent((c) => Math.max(0, c - 1))}
             disabled={current === 0}
           >
@@ -103,7 +104,7 @@ export default function ProductDetail() {
           </button>
           <button
             aria-label="Next image"
-            className="absolute top-1/2 -translate-y-1/2 right-2 bg-white/80 hover:bg-white text-ink rounded-full w-9 h-9 grid place-items-center shadow"
+            className="absolute top-1/2 -translate-y-1/2 right-3 bg-white/90 hover:bg-white text-black rounded-full w-10 h-10 grid place-items-center shadow-soft ring-1 ring-gold/30"
             onClick={() => setCurrent((c) => Math.min((product.images?.length ?? 1) - 1, c + 1))}
             disabled={current >= (product.images?.length ?? 1) - 1}
           >
@@ -116,7 +117,7 @@ export default function ProductDetail() {
               <button
                 key={i}
                 aria-label={`Go to slide ${i + 1}`}
-                className={`w-2.5 h-2.5 rounded-full ${i === current ? 'bg-brand' : 'bg-white/70'} shadow`}
+                className={`w-2.5 h-2.5 rounded-full ${i === current ? 'bg-gold' : 'bg-white/70'} shadow-soft`}
                 onClick={() => setCurrent(i)}
               />
             ))}
@@ -125,12 +126,12 @@ export default function ProductDetail() {
 
         {/* Thumbnails */}
         {product.images && product.images.length > 1 && (
-          <div className="mt-3 flex gap-2 flex-wrap">
+          <div className="mt-4 flex gap-2 flex-wrap">
             {product.images.map((img, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                className={`relative w-16 h-16 rounded overflow-hidden border ${i === current ? 'border-brand' : 'border-transparent'}`}
+                className={`relative w-16 h-16 rounded-2xl overflow-hidden border ${i === current ? 'border-gold' : 'border-gold/20'}`}
               >
                 {String(img).startsWith('http') ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -143,39 +144,42 @@ export default function ProductDetail() {
           </div>
         )}
 
-        <div className="mt-3 flex gap-2 flex-wrap">
+        <div className="mt-4 flex gap-2 flex-wrap">
           {product.scents?.map((s) => (
-            <span key={s} className="text-xs bg-gray-100 px-2 py-1 rounded">{s}</span>
+            <span key={s} className="text-xs bg-gold/10 text-black px-2.5 py-1 rounded-full border border-gold/20">{s}</span>
           ))}
           {product.moods?.map((m) => (
-            <span key={m} className="text-xs bg-gray-100 px-2 py-1 rounded">{m}</span>
+            <span key={m} className="text-xs bg-gold/10 text-black px-2.5 py-1 rounded-full border border-gold/20">{m}</span>
           ))}
         </div>
       </div>
       <div>
-        <h1 className="text-2xl font-semibold">{product.title}</h1>
-        <div className="text-brand text-xl font-bold mt-2">LKR {product.price.toFixed(2)}</div>
+        <h1 className="text-3xl font-serif tracking-tight text-black">{product.title}</h1>
+        <div className="text-gold text-2xl font-semibold mt-2">LKR {product.price.toFixed(2)}</div>
         { (product.size || product.sku) && (
-          <div className="mt-1 text-sm text-gray-700">Size: {product.size || product.sku}</div>
+          <div className="mt-1 text-sm text-black/70">Size: {product.size || product.sku}</div>
         ) }
-        {product.limitedEdition && <div className="text-red-600 text-sm mt-1">Limited edition</div>}
-        <p className="mt-4 text-gray-700 whitespace-pre-line">{product.description}</p>
+        {product.limitedEdition && <div className="text-black/80 text-sm mt-1">Limited edition</div>}
+        <div className="gold-divider my-4" />
+        <p className="mt-4 text-black/75 whitespace-pre-line">{product.description}</p>
         {product.ingredients && (
           <div className="mt-4">
-            <div className="font-medium">Ingredients</div>
-            <p className="text-gray-700">{product.ingredients}</p>
+            <div className="font-medium text-black">Ingredients</div>
+            <p className="text-black/75">{product.ingredients}</p>
           </div>
         )}
 
-        <button
-          className="mt-6 bg-brand text-white rounded-md px-6 py-3 hover:bg-brand/90"
+        <Button
+          className="mt-6"
+          variant="gold"
+          size="lg"
           onClick={() => {
             add({ id: product.id, title: product.title, price: product.price, image: product.images?.[0], qty: 1 });
             toast.success('Added to cart');
           }}
         >
           Add to Cart
-        </button>
+        </Button>
       </div>
     </div>
   );

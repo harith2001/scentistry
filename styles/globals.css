@@ -1,24 +1,50 @@
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* RGB channels for Tailwind alpha support */
+  --gold: 212 175 55;
+  --gold-light: 235 216 166;
+  --gold-dark: 168 125 36;
+  --white: 255 255 255;
+  --black: 17 17 17;
+}
 
 html, body, #__next {
   height: 100%;
 }
 
-/* Smooth fade-in animations */
-.fade-in {
-  opacity: 0;
-  transform: translateY(8px);
-  animation: fadeInUp 0.5s ease forwards;
+/* Base Theme */
+@layer base {
+  html { scroll-behavior: smooth; }
+  body {
+    @apply bg-white text-black antialiased;
+    background-image: radial-gradient(ellipse at top left, rgba(212,175,55,0.06), rgba(255,255,255,0) 55%),
+                      radial-gradient(ellipse at bottom right, rgba(212,175,55,0.05), rgba(255,255,255,0) 65%);
+  }
+  h1, h2, h3, h4, h5, h6 { @apply font-serif text-black; }
+  p, span, a, li, button, input, select, textarea { @apply font-sans; }
 }
 
-@keyframes fadeInUp {
-  to { opacity: 1; transform: translateY(0); }
+/* Utilities */
+@layer utilities {
+  .gold-divider { @apply h-px w-full bg-gradient-to-r from-gold/10 via-gold/50 to-gold/10; }
+  .gold-border { @apply border border-gold/20; }
+  .gold-ring { box-shadow: 0 0 0 3px rgba(212,175,55,0.25); }
 }
 
-/* Subtle paper texture effect for premium feel */
-body {
-  background-image: radial-gradient(ellipse at top left, rgba(255,255,255,0.6), rgba(255,255,255,0) 60%),
-                    radial-gradient(ellipse at bottom right, rgba(200,155,60,0.05), rgba(0,0,0,0) 70%);
-}
+/* Motion */
+.fade-in { animation: fadeIn 400ms ease-out both; }
+.slide-up { animation: slideUp 450ms ease-out both; }
+.scale-in { animation: scaleIn 300ms ease-out both; }
+
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideUp { from { transform: translateY(12px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+@keyframes scaleIn { from { transform: scale(0.98); opacity: 0 } to { transform: scale(1); opacity: 1 } }
+
+/* Focus styles for accessibility */
+*:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(212,175,55,0.35); border-radius: 0.75rem; }

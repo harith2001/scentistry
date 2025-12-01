@@ -6,6 +6,7 @@ import { auth } from '@/lib/firebaseClient';
 import { useRouter } from 'next/router';
 import Logo from '@/components/Logo';
 import { useEffect, useRef, useState } from 'react';
+import Button from '@/components/ui/Button';
 
 export default function Header() {
   const router = useRouter();
@@ -15,14 +16,14 @@ export default function Header() {
   const isAdminRoute = router.pathname.startsWith('/admin');
 
   const linkClass = (active: boolean) =>
-    `relative px-1 py-1 text-sm ${active ? 'text-brand' : 'text-ink/80'} hover:text-brand transition-colors ` +
-    "after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:bg-brand after:w-0 hover:after:w-full after:transition-all after:duration-200";
+    `relative px-1 py-1 text-sm ${active ? 'text-gold' : 'text-black/70'} hover:text-gold transition-colors ` +
+    "after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:bg-gold after:w-0 hover:after:w-full after:transition-all after:duration-200";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-brand/20 bg-white/70 backdrop-blur shadow-sm">
+    <header className="sticky top-0 z-40 border-b border-gold/15 bg-white/80 backdrop-blur-md shadow-soft">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Logo size={36} />
-        <nav className="flex items-center gap-5 text-sm">
+        <nav className="flex items-center gap-6 text-sm">
           {isAdminRoute ? (
             <>
               <Link href="/admin" className={linkClass(router.pathname === '/admin')}>Dashboard</Link>
@@ -35,12 +36,12 @@ export default function Header() {
             <>
               <Link href="/" className={linkClass(router.pathname === '/')}>Home</Link>
               <Link href="/orders" className={linkClass(router.pathname.startsWith('/orders'))}>Orders</Link>
-              {role === 'owner' && <Link href="/admin" className="text-brand font-medium">Admin</Link>}
+              {role === 'owner' && <Link href="/admin" className="text-gold font-medium">Admin</Link>}
               <Link href="/cart" className={linkClass(router.pathname === '/cart')}>
                 <span className="relative">
                   Cart
                   {count > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center text-xs bg-brand text-white rounded-full w-5 h-5 shadow-sm">{count}</span>
+                    <span className="ml-2 inline-flex items-center justify-center text-xs bg-gold text-black rounded-full w-5 h-5 shadow-soft">{count}</span>
                   )}
                 </span>
               </Link>
@@ -49,7 +50,9 @@ export default function Header() {
           {user ? (
             <UserMenu onLogout={async () => { try { await fetch('/api/auth/session', { method: 'DELETE' }); } catch {} await signOut(auth); router.push('/auth/login'); }} email={user.email || ''} photoURL={user.photoURL || ''} displayName={user.displayName || ''} />
           ) : (
-            <Link href="/auth/login" className="text-white bg-brand/90 hover:bg-brand rounded-md px-3 py-1 shadow-sm">Login</Link>
+            <Link href="/auth/login" className="inline-block">
+              <Button variant="gold" size="sm">Login</Button>
+            </Link>
           )}
         </nav>
       </div>
@@ -99,27 +102,27 @@ function UserMenu({ onLogout, email, photoURL, displayName }: { onLogout: () => 
       >
         {photoURL ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photoURL} alt={name || 'Profile'} className="w-9 h-9 rounded-full object-cover ring-1 ring-brand/30 shadow-sm" />
+          <img src={photoURL} alt={name || 'Profile'} className="w-9 h-9 rounded-full object-cover ring-1 ring-gold/30 shadow-soft" />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-ink/10 text-ink flex items-center justify-center font-semibold ring-1 ring-brand/30 shadow-sm">
+          <div className="w-9 h-9 rounded-full bg-black/5 text-black flex items-center justify-center font-semibold ring-1 ring-gold/30 shadow-soft">
             {initials}
           </div>
         )}
-        <svg className={`w-4 h-4 text-ink/60 transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <svg className={`w-4 h-4 text-black/60 transition-transform ${open ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
         </svg>
       </button>
       {open && (
-        <div ref={menuRef} className="absolute right-0 mt-2 w-44 bg-white/95 backdrop-blur rounded-md border border-ink/10 shadow-lg py-1 z-50">
+        <div ref={menuRef} className="absolute right-0 mt-2 w-48 bg-white/95 backdrop-blur rounded-2xl border border-gold/20 shadow-lux py-1 z-50">
           <Link
             href="/profile"
-            className="block px-3 py-2 text-sm text-ink hover:bg-brand/10"
+            className="block px-4 py-2.5 text-sm text-black hover:bg-gold/10"
             onClick={() => setOpen(false)}
           >
             Profile
           </Link>
           <button
-            className="w-full text-left px-3 py-2 text-sm text-ink hover:bg-brand/10"
+            className="w-full text-left px-4 py-2.5 text-sm text-black hover:bg-gold/10"
             onClick={async () => { setOpen(false); await onLogout(); }}
           >
             Logout
