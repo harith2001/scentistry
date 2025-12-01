@@ -116,7 +116,7 @@ export default function CheckoutPage() {
       clear();
       toast.success('Order created successfully. Thank you!');
       // Redirect to order confirmation/details page
-      router.push(`/orders/${res.id}`);
+      router.push(`/orders`);
     } catch (e: any) {
       console.error(e);
       toast.error(e.message || 'Failed to create order');

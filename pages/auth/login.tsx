@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, db } from '@/lib/firebaseClient';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -13,6 +13,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [showPassword, setShowPassword] = useState(false);
 
@@ -46,6 +47,17 @@ export default function LoginPage() {
       } catch (err) {
         console.error('Failed to set session cookie', err);
       }
+      // Migrate any guest orders (by email) to this uid (non-blocking)
+      try {
+        const token2 = await cred.user.getIdToken();
+        await fetch('/api/orders/migrate-to-uid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token2 ? { Authorization: `Bearer ${token2}` } : {}) },
+        });
+      } catch (err) {
+        console.error('Order migration failed', err);
+      }
+
       // Immediately look up role using localId (uid)
       let r: Role = 'customer';
       const uid = cred.user?.uid || auth.currentUser?.uid;
@@ -68,9 +80,28 @@ export default function LoginPage() {
       }
     } catch (e: any) {
       console.error(e);
-      toast.error(e.message || 'Login failed');
+      toast.error('Login failed, Try again');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onForgotPassword = async () => {
+    const emailTrim = email.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailTrim || !emailRegex.test(emailTrim)) {
+      toast.error('Enter a valid email above to reset');
+      return;
+    }
+    setResetting(true);
+    try {
+      await sendPasswordResetEmail(auth, emailTrim);
+      toast.success('Password reset email sent. Check your inbox and Spam/Junk.');
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.message || 'Failed to send reset email');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -123,6 +154,16 @@ export default function LoginPage() {
           {loading ? 'Logging in…' : 'Login'}
         </button>
       </form>
+      <div className="mt-3 text-sm">
+        <button
+          type="button"
+          onClick={onForgotPassword}
+          disabled={resetting}
+          className="text-brand hover:underline disabled:opacity-60"
+        >
+          {resetting ? 'Sending reset email…' : 'Forgot password?'}
+        </button>
+      </div>
       <div className="mt-3 text-sm text-gray-600">
         Don&apos;t have an account? <Link href="/auth/register" className="text-brand">Register</Link>
       </div>

@@ -71,10 +71,19 @@ export default function Register() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idToken, expiresInDays: 7 }),
           });
+          // Migrate any guest orders (by email) to this uid (non-blocking)
+          try {
+            await fetch('/api/orders/migrate-to-uid', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+            });
+          } catch (e) {
+            // ignore
+          }
         } catch {}
         try {
           await sendEmailVerification(cred.user);
-          toast.success('Account created. Verification email sent.');
+          toast.success('Account created. Please verify your Email');
         } catch {
           // If email sending fails, still proceed
           toast.success('Account created successfully');

@@ -68,6 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const key = `slips/${code}${ext}`;
       const result = await put(key, file.buffer, {
         access: 'public',
+        allowOverwrite: true, // keep filename as order code; replace if it already exists
         contentType: file.mimetype || (ext === '.pdf' ? 'application/pdf' : 'application/octet-stream')
       });
       const blobUrl = result.url;

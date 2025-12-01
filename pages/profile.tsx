@@ -191,6 +191,11 @@ export default function ProfilePage() {
           </span>
         )}
       </div>
+      {user && !user.emailVerified && (
+        <div className="mb-4 rounded-md border border-yellow-300 bg-yellow-50 text-yellow-900 px-4 py-3">
+          Please verify your email to secure your account and enable all features. Check your inbox and Spam/Junk folder for the verification email.
+        </div>
+      )}
       <form onSubmit={onSubmit} className="space-y-3">
         <input
           className="border rounded px-3 py-2 w-full"
