@@ -22,18 +22,27 @@ html, body, #__next {
 @layer base {
   html { scroll-behavior: smooth; }
   body {
-    @apply bg-white text-black antialiased;
+    background-color: rgb(var(--white));
+    color: rgb(var(--black));
+    -webkit-font-smoothing: antialiased;
     background-image: radial-gradient(ellipse at top left, rgba(212,175,55,0.06), rgba(255,255,255,0) 55%),
                       radial-gradient(ellipse at bottom right, rgba(212,175,55,0.05), rgba(255,255,255,0) 65%);
   }
-  h1, h2, h3, h4, h5, h6 { @apply font-serif text-black; }
-  p, span, a, li, button, input, select, textarea { @apply font-sans; }
+  h1, h2, h3, h4, h5, h6 { font-family: 'Playfair Display', serif; color: rgb(var(--black)); font-weight: 600; }
+  h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); line-height: 1.1; letter-spacing: -0.015em; }
+  h2 { font-size: clamp(1.9rem, 4.2vw, 2.75rem); line-height: 1.15; letter-spacing: -0.01em; }
+  h3 { font-size: clamp(1.6rem, 3.4vw, 2.1rem); line-height: 1.2; }
+  h4 { font-size: clamp(1.35rem, 2.8vw, 1.6rem); line-height: 1.25; }
+  h5 { font-size: clamp(1.15rem, 2.2vw, 1.3rem); line-height: 1.3; }
+  h6 { font-size: clamp(1rem, 2vw, 1.1rem); line-height: 1.35; }
+  body { line-height: 1.55; }
+  p, span, a, li, button, input, select, textarea { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
 }
 
 /* Utilities */
 @layer utilities {
-  .gold-divider { @apply h-px w-full bg-gradient-to-r from-gold/10 via-gold/50 to-gold/10; }
-  .gold-border { @apply border border-gold/20; }
+  .gold-divider { height:1px; width:100%; background: linear-gradient(to right, rgb(var(--gold) / 0.1), rgb(var(--gold) / 0.5), rgb(var(--gold) / 0.1)); }
+  .gold-border { border:1px solid rgb(var(--gold) / 0.2); }
   .gold-ring { box-shadow: 0 0 0 3px rgba(212,175,55,0.25); }
 }
 
@@ -48,3 +57,13 @@ html, body, #__next {
 
 /* Focus styles for accessibility */
 *:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(212,175,55,0.35); border-radius: 0.75rem; }
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in, .slide-up, .scale-in { animation: none !important; }
+}
+
+/* Mobile focus ring gentler */
+@media (max-width: 480px) {
+  *:focus-visible { box-shadow: 0 0 0 2px rgba(212,175,55,0.5); }
+}

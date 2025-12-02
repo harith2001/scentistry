@@ -14,16 +14,20 @@ export default function Header() {
   const { user, role } = useAuth();
   const count = items.reduce((s, i) => s + i.qty, 0);
   const isAdminRoute = router.pathname.startsWith('/admin');
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const linkClass = (active: boolean) =>
     `relative px-1 py-1 text-sm ${active ? 'text-gold' : 'text-black/70'} hover:text-gold transition-colors ` +
     "after:content-[''] after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:bg-gold after:w-0 hover:after:w-full after:transition-all after:duration-200";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-gold/15 bg-white/80 backdrop-blur-md shadow-soft">
+    <header className="sticky top-0 z-40 border-b border-gold/15 bg-white/85 backdrop-blur-md shadow-soft">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Logo size={36} />
-        <nav className="flex items-center gap-6 text-sm">
+        <div className="flex items-center gap-3">
+          <Logo size={36} />
+        </div>
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-8 text-sm">
           {isAdminRoute ? (
             <>
               <Link href="/admin" className={linkClass(router.pathname === '/admin')}>Dashboard</Link>
@@ -55,7 +59,65 @@ export default function Header() {
             </Link>
           )}
         </nav>
+        {/* Mobile controls */}
+        <div className="flex md:hidden items-center gap-3">
+          <Link href="/cart" className="relative" aria-label="Cart">
+            <Button variant="outline" size="sm" className="px-3 py-2">
+              <span className="sr-only">Cart</span>
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4"/><circle cx="9" cy="19" r="1"/><circle cx="17" cy="19" r="1"/></svg>
+              {count > 0 && (
+                <span className="absolute -top-1 -right-1 inline-flex items-center justify-center text-[10px] bg-gold text-black rounded-full w-5 h-5 shadow-soft">{count}</span>
+              )}
+            </Button>
+          </Link>
+          {user ? (
+            <UserMenu onLogout={async () => { try { await fetch('/api/auth/session', { method: 'DELETE' }); } catch {} await signOut(auth); router.push('/auth/login'); }} email={user.email || ''} photoURL={user.photoURL || ''} displayName={user.displayName || ''} />
+          ) : (
+            <Link href="/auth/login" aria-label="Login"><Button variant="gold" size="sm">Login</Button></Link>
+          )}
+          <button
+            onClick={() => setMobileOpen(o => !o)}
+            aria-label="Toggle navigation menu"
+            aria-expanded={mobileOpen}
+            className="rounded-2xl border border-gold/30 bg-white/70 backdrop-blur px-3 py-2 text-black shadow-soft active:scale-95 transition"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              {mobileOpen ? (
+                <path d="M6 6l12 12M6 18L18 6" />
+              ) : (
+                <>
+                  <path d="M3 6h18" />
+                  <path d="M3 12h14" />
+                  <path d="M3 18h10" />
+                </>
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
+      {/* Mobile Menu Panel */}
+      {mobileOpen && (
+        <div className="md:hidden border-t border-gold/15 bg-white/95 backdrop-blur pb-6 shadow-soft animate-slide-up">
+          <div className="container mx-auto px-4 pt-4 flex flex-col gap-4 text-sm">
+            {isAdminRoute ? (
+              <>
+                <Link onClick={() => setMobileOpen(false)} href="/admin" className={linkClass(router.pathname === '/admin')}>Dashboard</Link>
+                <Link onClick={() => setMobileOpen(false)} href="/admin/products" className={linkClass(router.pathname === '/admin/products')}>Products</Link>
+                <Link onClick={() => setMobileOpen(false)} href="/admin/orders" className={linkClass(router.pathname === '/admin/orders')}>Orders</Link>
+                <Link onClick={() => setMobileOpen(false)} href="/admin/customers" className={linkClass(router.pathname === '/admin/customers')}>Customers</Link>
+                <Link onClick={() => setMobileOpen(false)} href="/admin/analytics" className={linkClass(router.pathname === '/admin/analytics')}>Analytics</Link>
+              </>
+            ) : (
+              <>
+                <Link onClick={() => setMobileOpen(false)} href="/" className={linkClass(router.pathname === '/')}>Home</Link>
+                <Link onClick={() => setMobileOpen(false)} href="/orders" className={linkClass(router.pathname.startsWith('/orders'))}>Orders</Link>
+                {role === 'owner' && <Link onClick={() => setMobileOpen(false)} href="/admin" className="text-gold font-medium">Admin</Link>}
+                <Link onClick={() => setMobileOpen(false)} href="/cart" className={linkClass(router.pathname === '/cart')}>Cart</Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }
