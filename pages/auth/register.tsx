@@ -9,19 +9,21 @@ import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 export default function Register() {
   const router = useRouter();
   const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ fullName?: string; email?: string; password?: string; confirm?: string }>({});
+  const [errors, setErrors] = useState<{ fullName?: string; phone?: string; email?: string; password?: string; confirm?: string }>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const nextErrors: { fullName?: string; email?: string; password?: string; confirm?: string } = {};
+    const nextErrors: { fullName?: string; phone?: string; email?: string; password?: string; confirm?: string } = {};
     const nameTrim = fullName.trim();
     const emailTrim = email.trim();
+    const phoneTrim = phone.trim();
     const passTrim = password.trim();
     const confirmTrim = confirm.trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -29,12 +31,17 @@ export default function Register() {
     else if (nameTrim.length < 2) nextErrors.fullName = 'Enter your full name';
     if (!emailTrim) nextErrors.email = 'Email is required';
     else if (!emailRegex.test(emailTrim)) nextErrors.email = 'Enter a valid email';
+    if (!phoneTrim) nextErrors.phone = 'Phone number is required';
+    else {
+      const digits = phoneTrim.replace(/\D/g, '');
+      if (digits.length < 8 || digits.length > 15) nextErrors.phone = 'Enter a valid phone number';
+    }
     if (!passTrim) nextErrors.password = 'Password is required';
     else if (passTrim.length < 6) nextErrors.password = 'Password must be at least 6 characters';
     if (!confirmTrim) nextErrors.confirm = 'Please confirm your password';
     else if (passTrim !== confirmTrim) nextErrors.confirm = 'Passwords do not match';
     setErrors(nextErrors);
-    if (nextErrors.fullName || nextErrors.email || nextErrors.password || nextErrors.confirm) {
+    if (nextErrors.fullName || nextErrors.phone || nextErrors.email || nextErrors.password || nextErrors.confirm) {
       toast.error('Please fix the highlighted errors');
       return;
     }
@@ -47,7 +54,7 @@ export default function Register() {
           customerCode: '',
           fullName: nameTrim,
           email: emailTrim.toLowerCase(),
-          phone: '',
+          phone: phoneTrim,
           address: '',
           city: '',
           country: '',
@@ -115,6 +122,18 @@ export default function Register() {
               required
             />
             {errors.fullName && <p className="mt-1 text-xs text-red-600">{errors.fullName}</p>}
+          </div>
+          <div>
+            <label className="block text-sm text-ink/80 mb-1">Phone</label>
+            <input
+              type="tel"
+              className={`w-full rounded-md border px-3 py-2 bg-white ${errors.phone ? 'border-red-500 focus:border-red-500' : 'border-ink/10 focus:border-brand focus:ring-1 focus:ring-brand'}`}
+              value={phone}
+              onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors(prev => ({ ...prev, phone: undefined })); }}
+              placeholder="e.g. +94771234567"
+              required
+            />
+            {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone}</p>}
           </div>
           <div>
             <label className="block text-sm text-ink/80 mb-1">Email</label>
