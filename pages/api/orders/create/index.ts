@@ -7,6 +7,7 @@ import { adminDb } from '@/lib/firebaseAdmin';
 import { verifyAny } from '@/lib/serverAuth';
 import { put } from '@vercel/blob';
 import { strictWriteRateLimit } from '@/lib/rateLimit';
+import { sendLowStockEmail } from '@/lib/email';
 
 export const config = { api: { bodyParser: false } };
 
@@ -47,6 +48,50 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const customer = JSON.parse(body.customer || '{}');
       const gift = JSON.parse(body.gift || '{}');
 
+      // Guard: block orders if authenticated user is marked inactive
+      if (authInfo?.uid) {
+        try {
+          const profileSnap = await dbAdmin.collection('profiles').doc(authInfo.uid).get();
+          if (profileSnap.exists) {
+            const pdata = profileSnap.data() as any;
+            if (pdata && pdata.isActive === false) {
+              return res.status(403).json({ error: 'Account is inactive. Please contact support.' });
+            }
+          }
+        } catch (e) {
+          // On read failure, be conservative and allow; log for diagnostics
+          console.error('Failed to read profile for inactivity check', e);
+        }
+      } else {
+        // Guest safety: if the provided customer email/phone belongs to an inactive profile, block order
+        try {
+          const profilesCol = dbAdmin.collection('profiles');
+          const email = (customer?.email || '').trim();
+          const phone = (customer?.phone || '').trim();
+          let foundInactive = false;
+          if (email) {
+            const q = await profilesCol.where('email', '==', email).limit(1).get();
+            if (!q.empty) {
+              const pdata = q.docs[0].data() as any;
+              if (pdata && pdata.isActive === false) foundInactive = true;
+            }
+          }
+          if (!foundInactive && phone) {
+            const q = await profilesCol.where('phone', '==', phone).limit(1).get();
+            if (!q.empty) {
+              const pdata = q.docs[0].data() as any;
+              if (pdata && pdata.isActive === false) foundInactive = true;
+            }
+          }
+          if (foundInactive) {
+            return res.status(403).json({ error: 'This profile is inactive. Please log in and contact support.' });
+          }
+        } catch (e) {
+          console.error('Guest inactive profile check failed', e);
+          // Do not block for transient read errors; continue
+        }
+      }
+
       let code: string | undefined = body.code;
       if (!code) {
         const counterRef = dbAdmin.collection('counters').doc('orders');
@@ -72,21 +117,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         contentType: file.mimetype || (ext === '.pdf' ? 'application/pdf' : 'application/octet-stream')
       });
       const blobUrl = result.url;
+      // Atomically decrement stock for each product and create the order
+      const LOW_STOCK_THRESHOLD = 5;
+      const ordersCol = dbAdmin.collection('orders');
+      const orderDocRef = ordersCol.doc();
 
-      const orderRef = await dbAdmin.collection('orders').add({
-        userId: authInfo?.uid || null,
-        items,
-        total,
-        customer,
-        gift,
-        slipUrl: blobUrl,
-        slipPath: blobUrl,
-        code,
-        status: 'paid',
-        createdAt: new Date(),
+      const lowStockAlerts: Array<{ title: string; stock: number }> = [];
+
+      await dbAdmin.runTransaction(async (tx: FirebaseFirestore.Transaction) => {
+        // Decrement stock per item
+        for (const item of (items || [])) {
+          const pid = item?.id;
+          const qty = Number(item?.qty || 0);
+          if (!pid || qty <= 0) continue;
+          const pref = dbAdmin.collection('products').doc(pid);
+          const psnap = await tx.get(pref);
+          if (!psnap.exists) continue;
+          const pdata = (psnap.data() || {}) as any;
+          const currentStock = Number(pdata.stock || 0);
+          const newStock = Math.max(0, currentStock - qty);
+          tx.update(pref, { stock: newStock, updatedAt: new Date().toISOString() });
+          // Track low stock transitions for post-transaction alerts
+          if (newStock < LOW_STOCK_THRESHOLD && currentStock >= LOW_STOCK_THRESHOLD) {
+            lowStockAlerts.push({ title: pdata.title || pid, stock: newStock });
+          }
+        }
+
+        // Create the order document
+        tx.set(orderDocRef, {
+          userId: authInfo?.uid || null,
+          items,
+          total,
+          customer,
+          gift,
+          slipUrl: blobUrl,
+          slipPath: blobUrl,
+          code,
+          status: 'paid',
+          createdAt: new Date(),
+        });
       });
 
-      return res.status(200).json({ id: orderRef.id, code, slipUrl: blobUrl });
+      // Send low stock alerts after transaction completes
+      //await Promise.all(lowStockAlerts.map((a) => sendLowStockEmail(a.title, a.stock).catch(() => undefined)));
+
+      return res.status(200).json({ id: orderDocRef.id, code, slipUrl: blobUrl });
     } catch (e: any) {
       console.error(e);
       return res.status(500).json({ error: e.message || 'Failed to create order' });

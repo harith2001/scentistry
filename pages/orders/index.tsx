@@ -85,13 +85,13 @@ export default function OrdersListPage() {
                 <td className="p-3 text-right">LKR {r.total?.toFixed?.(2) ?? r.total}</td>
                 <td className="p-3 flex items-center gap-3">
                   <Link className="text-brand" href={`/orders/${r.id}`}>View</Link>
-                  <button
+                  {/* <button
                     type="button"
                     onClick={() => requestDelete(r.id)}
                     className="text-red-600 hover:underline"
                   >
                     Delete
-                  </button>
+                  </button> */}
                 </td>
               </tr>
             ))}
