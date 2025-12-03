@@ -9,6 +9,7 @@ import SectionHeading from '@/components/ui/SectionHeading';
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [qText, setQText] = useState('');
+  const [sortMode, setSortMode] = useState<'none' | 'price-asc' | 'price-desc' | 'discount-only'>('none');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,14 +28,36 @@ export default function Home() {
 
   const filtered = useMemo(() => {
     const t = qText.trim().toLowerCase();
-    if (!t) return products;
-    return products.filter((p: Product) => (
+    let list = products.filter((p: Product) => (
       (p.title || '').toLowerCase().includes(t) ||
       (p.size || p.sku || '').toLowerCase().includes(t) ||
       (p.scents || []).some((s: string) => s.toLowerCase().includes(t)) ||
       (p.moods || []).some((m: string) => m.toLowerCase().includes(t))
     ));
-  }, [products, qText]);
+    if (!t) list = products;
+
+    // Apply discount-only filter
+    if (sortMode === 'discount-only') {
+      list = list.filter((p) => typeof (p as any).discountedPrice === 'number' && (p as any).discountedPrice! > 0 && (p as any).discountedPrice! < p.price);
+    }
+
+    // Sort by price
+    if (sortMode === 'price-asc') {
+      list = [...list].sort((a, b) => {
+        const ap = typeof (a as any).discountedPrice === 'number' && (a as any).discountedPrice! > 0 && (a as any).discountedPrice! < a.price ? (a as any).discountedPrice! : a.price;
+        const bp = typeof (b as any).discountedPrice === 'number' && (b as any).discountedPrice! > 0 && (b as any).discountedPrice! < b.price ? (b as any).discountedPrice! : b.price;
+        return ap - bp;
+      });
+    } else if (sortMode === 'price-desc') {
+      list = [...list].sort((a, b) => {
+        const ap = typeof (a as any).discountedPrice === 'number' && (a as any).discountedPrice! > 0 && (a as any).discountedPrice! < a.price ? (a as any).discountedPrice! : a.price;
+        const bp = typeof (b as any).discountedPrice === 'number' && (b as any).discountedPrice! > 0 && (b as any).discountedPrice! < b.price ? (b as any).discountedPrice! : b.price;
+        return bp - ap;
+      });
+    }
+
+    return list;
+  }, [products, qText, sortMode]);
 
   return (
     <div className="space-y-8">
@@ -49,6 +72,19 @@ export default function Home() {
             value={qText}
             onChange={(e: ChangeEvent<HTMLInputElement>) => setQText(e.target.value)}
           />
+          <div className="mt-3 flex items-center justify-center gap-3">
+            <label className="text-sm text-black/70">Sort:</label>
+            <select
+              className="border border-gold/30 rounded-2xl px-3 py-2 bg-white"
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as any)}
+            >
+              <option value="none">Default</option>
+              <option value="price-asc">Lowest price</option>
+              <option value="price-desc">Highest price</option>
+              <option value="discount-only">Discounted products</option>
+            </select>
+          </div>
         </div>
       </section>
 
