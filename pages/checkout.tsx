@@ -22,6 +22,7 @@ export default function CheckoutPage() {
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const DELIVERY_FEE = 450;
+  const [showBank, setShowBank] = useState(false);
 
   useEffect(() => {
     // Reserve and show order code upfront so the user can add it to bank remarks
@@ -259,13 +260,21 @@ export default function CheckoutPage() {
 
           <div>
             <div className="font-medium mb-2">Bank Transfer Slip <span className="text-red-600">*</span></div>
-            <label className="inline-flex items-center gap-2 px-4 py-2 border rounded cursor-pointer bg-white hover:bg-brand/10 text-ink">
+            <div className="flex items-center gap-3 flex-wrap">
+              <label className="inline-flex items-center gap-2 px-4 py-2 border rounded cursor-pointer bg-white hover:bg-brand/10 text-ink">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-brand">
                 <path fillRule="evenodd" d="M3 4.5A1.5 1.5 0 014.5 3h11A1.5 1.5 0 0117 4.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 013 15.5v-11zm5 1a.5.5 0 00-.5.5v3H6a.5.5 0 000 1h1.5v3a.5.5 0 001 0v-3H10a.5.5 0 000-1H8.5v-3a.5.5 0 00-.5-.5z" clipRule="evenodd" />
               </svg>
               <span>{slip ? 'Change file' : 'Upload slip'}</span>
               <input type="file" className="hidden" accept=".png,.jpg,.jpeg,.pdf" onChange={(e) => setSlip(e.target.files?.[0] || null)} />
-            </label>
+              </label>
+              <button type="button" onClick={() => setShowBank(true)} className="inline-flex items-center gap-2 px-4 py-2 border rounded bg-white hover:bg-brand/10 text-ink">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-brand">
+                  <path d="M12 3l9 4v2H3V7l9-4zm-9 8h18v2H3v-2zm2 4h2v4H5v-4zm4 0h2v4H9v-4zm4 0h2v4h-2v-4zm4 0h2v4h-2v-4z" />
+                </svg>
+                Bank Details
+              </button>
+            </div>
             <p className="text-sm text-red-600 mt-2">Add the order number as the remarks in transfer slips</p>
             {slip && (
               <div className="mt-3 flex items-start gap-3">
@@ -292,6 +301,24 @@ export default function CheckoutPage() {
             )}
             <p className="text-xs text-gray-500 mt-1">Allowed: PNG, JPG, PDF. Max 10MB.</p>
           </div>
+          {showBank && (
+            <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center" role="dialog" aria-modal="true">
+              <div className="bg-white rounded-md shadow-soft w-full max-w-md p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold">Bank Details</h2>
+                  <button type="button" onClick={() => setShowBank(false)} className="text-ink/70 hover:text-brand">✕</button>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between"><span className="text-ink/70">Account No</span><span className="font-medium">335 2001 8002 0518</span></div>
+                  <div className="flex justify-between"><span className="text-ink/70">Account Name</span><span className="font-medium">S G De Silva</span></div>
+                  <div className="flex justify-between"><span className="text-ink/70">Bank name</span><span className="font-medium">People’s Bank</span></div>
+                  <div className="flex justify-between"><span className="text-ink/70">Branch Name</span><span className="font-medium">Nugegoda City (335)</span></div>
+                  <div className="flex justify-between"><span className="text-ink/70">Country</span><span className="font-medium">Sri Lanka</span></div>
+                  <div className="flex justify-between"><span className="text-ink/70">SWIFT</span><span className="font-medium">PSBKLKLX</span></div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <button disabled={loading} className="bg-brand text-white px-6 py-3 rounded hover:bg-brand/90 disabled:opacity-60 inline-flex items-center gap-2">
             {loading && (
