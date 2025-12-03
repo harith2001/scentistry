@@ -66,26 +66,24 @@ export default function Home() {
       <section className="text-center space-y-4">
         <SectionHeading title="Our Collection" subtitle="Refined scents for a calm, minimalist lifestyle." />
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3">
-            <input
-              className="flex-1 border border-gold/30 rounded-2xl px-4 py-3 bg-white hover:bg-gold/10 transition-colors focus:outline-none focus:ring-0 focus:border-gold/60 shadow-soft"
-              placeholder="Search by name, scent, mood, size"
-              value={qText}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setQText(e.target.value)}
-            />
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-black/70">Sort:</label>
-              <select
-                className="border border-gold/30 rounded-2xl px-3 py-2 bg-white hover:bg-gold/10 transition-colors min-w-[12rem]"
-                value={sortMode}
-                onChange={(e) => setSortMode(e.target.value as any)}
-              >
-                <option value="none">Default</option>
-                <option value="price-asc">Lowest price</option>
-                <option value="price-desc">Highest price</option>
-                <option value="discount-only">Discounted products</option>
-              </select>
-            </div>
+          <input
+            className="w-full border border-gold/30 rounded-2xl px-4 py-3 bg-white hover:bg-gold/10 transition-colors focus:outline-none focus:ring-0 focus:border-gold/60 shadow-soft"
+            placeholder="Search by name, scent, mood, size"
+            value={qText}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setQText(e.target.value)}
+          />
+          <div className="mt-3 flex items-center gap-2 justify-center">
+            <label className="text-sm text-black/70">Sort:</label>
+            <select
+              className="border border-gold/30 rounded-2xl px-3 py-2 bg-white hover:bg-gold/10 transition-colors min-w-[12rem]"
+              value={sortMode}
+              onChange={(e) => setSortMode(e.target.value as any)}
+            >
+              <option value="none">Default</option>
+              <option value="price-asc">Lowest price</option>
+              <option value="price-desc">Highest price</option>
+              <option value="discount-only">Discounted products</option>
+            </select>
           </div>
         </div>
       </section>
