@@ -8,6 +8,8 @@ interface Props { product: any }
 
 export default function ProductCard({ product }: Props) {
   const { add } = useCart();
+  const hasDiscount = typeof product.discountedPrice === 'number' && product.discountedPrice > 0 && product.discountedPrice < product.price;
+  const effectivePrice = hasDiscount ? product.discountedPrice : product.price;
   return (
     <div className="bg-white rounded-3xl border border-gold/15 shadow-soft hover:shadow-lux transition-all duration-300 p-4 sm:p-6 flex flex-col">
       <Link href={`/product/${product.id}`} className="block group" aria-label={product.title}>
@@ -24,7 +26,14 @@ export default function ProductCard({ product }: Props) {
         </div>
         <div className="mt-4 space-y-1">
           <h3 className="font-serif text-lg tracking-tight text-black line-clamp-1">{product.title}</h3>
-          <div className="text-gold font-semibold">LKR {product.price?.toFixed?.(2) ?? product.price}</div>
+          {hasDiscount ? (
+            <div className="flex items-baseline gap-2">
+              <div className="text-black/60 line-through">LKR {product.price?.toFixed?.(2) ?? product.price}</div>
+              <div className="text-gold font-semibold">LKR {effectivePrice?.toFixed?.(2) ?? effectivePrice}</div>
+            </div>
+          ) : (
+            <div className="text-gold font-semibold">LKR {product.price?.toFixed?.(2) ?? product.price}</div>
+          )}
           {product.limitedEdition && <span className="text-xs text-black/70">Limited edition</span>}
         </div>
       </Link>
@@ -33,7 +42,7 @@ export default function ProductCard({ product }: Props) {
           className="w-full"
           variant="gold"
           onClick={() => {
-            add({ id: product.id, title: product.title, price: product.price, image: product.images?.[0], qty: 1 });
+            add({ id: product.id, title: product.title, price: effectivePrice, image: product.images?.[0], qty: 1 });
             toast.success('Added to cart');
           }}
         >

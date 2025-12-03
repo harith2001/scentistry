@@ -34,6 +34,8 @@ export default function ProductDetail() {
 
   if (loading) return <div>Loading product…</div>;
   if (!product) return <div>Product not found.</div>;
+  const hasDiscount = typeof product.discountedPrice === 'number' && product.discountedPrice > 0 && product.discountedPrice < product.price;
+  const effectivePrice = hasDiscount ? product.discountedPrice! : product.price;
 
   return (
     <div className="grid gap-8 md:grid-cols-2">
@@ -155,7 +157,14 @@ export default function ProductDetail() {
       </div>
       <div>
         <h1 className="text-3xl font-serif tracking-tight text-black">{product.title}</h1>
-        <div className="text-gold text-2xl font-semibold mt-2">LKR {product.price.toFixed(2)}</div>
+        {hasDiscount ? (
+          <div className="mt-2 flex items-baseline gap-3">
+            <div className="text-black/60 line-through">LKR {product.price.toFixed(2)}</div>
+            <div className="text-gold text-2xl font-semibold">LKR {effectivePrice.toFixed(2)}</div>
+          </div>
+        ) : (
+          <div className="text-gold text-2xl font-semibold mt-2">LKR {product.price.toFixed(2)}</div>
+        )}
         { (product.size || product.sku) && (
           <div className="mt-1 text-sm text-black/70">Size: {product.size || product.sku}</div>
         ) }
@@ -174,7 +183,7 @@ export default function ProductDetail() {
           variant="gold"
           size="lg"
           onClick={() => {
-            add({ id: product.id, title: product.title, price: product.price, image: product.images?.[0], qty: 1 });
+            add({ id: product.id, title: product.title, price: effectivePrice, image: product.images?.[0], qty: 1 });
             toast.success('Added to cart');
           }}
         >

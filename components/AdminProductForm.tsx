@@ -12,6 +12,9 @@ interface Props {
 export default function AdminProductForm({ existing, onDone }: Props) {
   const [title, setTitle] = useState(existing?.title || "");
   const [price, setPrice] = useState(existing?.price?.toString() || "");
+  const [discountedPrice, setDiscountedPrice] = useState(
+    existing?.discountedPrice != null ? existing.discountedPrice.toString() : ""
+  );
   const [stock, setStock] = useState(existing?.stock?.toString() || "");
   const [description, setDescription] = useState(existing?.description || "");
   const [ingredients, setIngredients] = useState(existing?.ingredients || "");
@@ -32,9 +35,16 @@ export default function AdminProductForm({ existing, onDone }: Props) {
     e.preventDefault();
     setSaving(true);
     try {
+      const priceNum = parseFloat(price) || 0;
+      const discountedNum = discountedPrice === "" ? undefined : Math.max(0, parseFloat(discountedPrice) || 0);
+      if (discountedNum !== undefined && discountedNum >= priceNum) {
+        toast.error("Discounted price must be less than original price");
+        setSaving(false);
+        return;
+      }
       const data = {
         title: title.trim(),
-        price: parseFloat(price) || 0,
+        price: priceNum,
         stock: parseInt(stock || "0", 10),
         description: description.trim(),
         ingredients: ingredients.trim(),
@@ -57,6 +67,7 @@ export default function AdminProductForm({ existing, onDone }: Props) {
         // keep writing legacy sku for now for older data compatibility
         sku: size.trim(),
         updatedAt: new Date().toISOString(),
+        ...(discountedNum !== undefined ? { discountedPrice: discountedNum } : {}),
       };
       if (existing) {
         await updateDoc(doc(db, "products", existing.id), data as any);
@@ -131,6 +142,13 @@ export default function AdminProductForm({ existing, onDone }: Props) {
         type="number"
         value={price}
         onChange={(e) => setPrice(e.target.value)}
+      />
+      <input
+        className="border rounded px-3 py-2 w-full"
+        placeholder="Discounted price (optional)"
+        type="number"
+        value={discountedPrice}
+        onChange={(e) => setDiscountedPrice(e.target.value)}
       />
       <input
         className="border rounded px-3 py-2 w-full"
