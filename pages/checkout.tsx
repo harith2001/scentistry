@@ -21,6 +21,7 @@ export default function CheckoutPage() {
   const [createdOrderId, setCreatedOrderId] = useState<string>('');
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const DELIVERY_FEE = 450;
 
   useEffect(() => {
     // Reserve and show order code upfront so the user can add it to bank remarks
@@ -124,7 +125,8 @@ export default function CheckoutPage() {
       const fd = new FormData();
       fd.append('slip', slip);
       fd.append('items', JSON.stringify(items.map((i: CartItem) => ({ id: i.id, title: i.title, price: i.price, qty: i.qty }))));
-      fd.append('total', String(total));
+      // Include delivery fee in total
+      fd.append('total', String(total + DELIVERY_FEE));
       fd.append('customer', JSON.stringify(customer));
       if (orderCode) fd.append('code', orderCode);
       const giftPayload = giftEnabled ? { enabled: true, ...recipient } : { enabled: false };
@@ -165,7 +167,7 @@ export default function CheckoutPage() {
       setUploadProgress(0);
     }
   };
-console.log('Rerender checkout page', orderCode);
+//console.log('Rerender checkout page', orderCode);
   return (
     <div className="grid gap-6 md:grid-cols-3">
       <div className="md:col-span-2">
@@ -310,7 +312,9 @@ console.log('Rerender checkout page', orderCode);
             <div key={i.id} className="flex justify-between"><span>{i.title} × {i.qty}</span><span>LKR {(i.price * i.qty).toFixed(2)}</span></div>
           ))}
         </div>
-        <div className="mt-3 flex justify-between font-semibold"><span>Total</span><span>LKR {total.toFixed(2)}</span></div>
+        <div className="mt-3 flex justify-between"><span>Subtotal</span><span>LKR {total.toFixed(2)}</span></div>
+        <div className="mt-1 flex justify-between"><span>Delivery fee</span><span>LKR {DELIVERY_FEE.toFixed(2)}</span></div>
+        <div className="mt-3 flex justify-between font-semibold"><span>Total</span><span>LKR {(total + DELIVERY_FEE).toFixed(2)}</span></div>
       </div>
     </div>
   );
