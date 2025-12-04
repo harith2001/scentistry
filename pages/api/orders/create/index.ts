@@ -126,24 +126,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const emailProducts: Array<{ title: string; quantity: number; price?: number }> = [];
 
       await dbAdmin.runTransaction(async (tx: FirebaseFirestore.Transaction) => {
-        // Decrement stock per item
+        // Phase 1: Read all product documents first
+        const productReads: Array<{
+          pref: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>;
+          snap: FirebaseFirestore.DocumentSnapshot<FirebaseFirestore.DocumentData>;
+          item: any;
+        }> = [];
         for (const item of (items || [])) {
           const pid = item?.id;
           const qty = Number(item?.qty || 0);
           if (!pid || qty <= 0) continue;
           const pref = dbAdmin.collection('products').doc(pid);
-          const psnap = await tx.get(pref);
-          if (!psnap.exists) continue;
-          const pdata = (psnap.data() || {}) as any;
+          const snap = await tx.get(pref);
+          if (!snap.exists) continue;
+          productReads.push({ pref, snap, item });
+        }
+
+        // Phase 2: Perform writes after all reads
+        for (const { pref, snap, item } of productReads) {
+          const pdata = (snap.data() || {}) as any;
+          const qty = Number(item?.qty || 0);
           const currentStock = Number(pdata.stock || 0);
           const newStock = Math.max(0, currentStock - qty);
           tx.update(pref, { stock: newStock, updatedAt: new Date().toISOString() });
           // Track low stock transitions for post-transaction alerts
           if (newStock < LOW_STOCK_THRESHOLD && currentStock >= LOW_STOCK_THRESHOLD) {
-            lowStockAlerts.push({ title: pdata.title || pid, stock: newStock });
+            lowStockAlerts.push({ title: pdata.title || item?.id, stock: newStock });
           }
           // Collect product info for confirmation email
-          const title = (item?.title as string) || (pdata.title as string) || pid;
+          const title = (item?.title as string) || (pdata.title as string) || item?.id;
           const price = typeof item?.price === 'number' ? item.price : (pdata.discountedPrice ?? pdata.price);
           emailProducts.push({ title, quantity: qty, price });
         }
