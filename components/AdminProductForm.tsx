@@ -250,12 +250,23 @@ export default function AdminProductForm({ existing, onDone }: Props) {
         />{" "}
         Limited edition
       </label>
-      <button
-        disabled={saving}
-        className="bg-brand text-white rounded px-4 py-2 disabled:opacity-60"
-      >
-        {saving ? "Saving…" : existing ? "Update" : "Create"}
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          disabled={saving}
+          className="bg-brand text-white rounded px-4 py-2 disabled:opacity-60"
+        >
+          {saving ? "Saving…" : existing ? "Update" : "Create"}
+        </button>
+        {existing && (
+          <button
+            type="button"
+            onClick={onDone}
+            className="bg-red-600 hover:bg-red-700 text-white rounded px-4 py-2"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 }

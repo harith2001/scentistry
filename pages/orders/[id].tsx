@@ -44,10 +44,10 @@ export default function OrderDetailPage() {
         <div className="font-medium mb-2">Items</div>
         <ul className="list-disc ml-5">
           {order.items?.map((i: any) => (
-            <li key={i.id}>{i.title} × {i.qty} — ${(i.price * i.qty).toFixed(2)}</li>
+            <li key={i.id}>{i.title} × {i.qty} — LKR. {(i.price * i.qty).toFixed(2)}</li>
           ))}
         </ul>
-        <div className="mt-3 font-semibold">Total: ${order.total?.toFixed?.(2) ?? order.total}</div>
+        <div className="mt-3 font-semibold">Total: LKR. {order.total?.toFixed?.(2) ?? order.total}</div>
       </div>
 
       {slipUrl && (
