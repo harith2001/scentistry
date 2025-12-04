@@ -7,7 +7,7 @@ import { adminDb } from '@/lib/firebaseAdmin';
 import { verifyAny } from '@/lib/serverAuth';
 import { put } from '@vercel/blob';
 import { strictWriteRateLimit } from '@/lib/rateLimit';
-import { sendLowStockEmail } from '@/lib/email';
+import { sendLowStockEmail, sendOrderCreatedEmail } from '@/lib/email';
 
 export const config = { api: { bodyParser: false } };
 
@@ -123,6 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const orderDocRef = ordersCol.doc();
 
       const lowStockAlerts: Array<{ title: string; stock: number }> = [];
+      const emailProducts: Array<{ title: string; quantity: number; price?: number }> = [];
 
       await dbAdmin.runTransaction(async (tx: FirebaseFirestore.Transaction) => {
         // Decrement stock per item
@@ -141,6 +142,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (newStock < LOW_STOCK_THRESHOLD && currentStock >= LOW_STOCK_THRESHOLD) {
             lowStockAlerts.push({ title: pdata.title || pid, stock: newStock });
           }
+          // Collect product info for confirmation email
+          const title = (item?.title as string) || (pdata.title as string) || pid;
+          const price = typeof item?.price === 'number' ? item.price : (pdata.discountedPrice ?? pdata.price);
+          emailProducts.push({ title, quantity: qty, price });
         }
 
         // Create the order document
@@ -160,6 +165,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Send low stock alerts after transaction completes
       //await Promise.all(lowStockAlerts.map((a) => sendLowStockEmail(a.title, a.stock).catch(() => undefined)));
+
+      // Send order confirmation email to customer (non-blocking)
+      try {
+        const to = (customer?.email || '').trim();
+        const customerName = (customer?.name || customer?.fullName || '').trim() || 'Customer';
+        if (to && code) {
+          await sendOrderCreatedEmail(to, code, total, customerName, emailProducts);
+        }
+      } catch (e) {
+        console.warn('sendOrderCreatedEmail failed (non-blocking):', e);
+      }
 
       return res.status(200).json({ id: orderDocRef.id, code, slipUrl: blobUrl });
     } catch (e: any) {

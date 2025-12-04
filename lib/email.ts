@@ -1,7 +1,7 @@
 import sendgrid from '@sendgrid/mail';
 
 const apiKey = process.env.SENDGRID_API_KEY;
-const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'no-reply@example.com';
+const fromEmail = process.env.SENDGRID_FROM_EMAIL || 'scentistryc@gmail.com';
 const ownerEmail = process.env.OWNER_EMAIL || fromEmail;
 
 if (apiKey) {
@@ -18,10 +18,36 @@ export async function sendOrderStatusEmail(to: string, orderCode: string, status
   await sendgrid.send({ to, from: fromEmail, subject: subj, text: body });
 }
 
-export async function sendOrderCreatedEmail(to: string, orderCode: string) {
+export async function sendOrderCreatedEmail(
+  to: string,
+  orderCode: string,
+  total: number,
+  customerName: string,
+  products: { title: string; quantity: number; price?: number }[]
+) {
   if (!apiKey) return;
   const subj = `Scentistry order received (${orderCode})`;
-  const body = `Hello,\n\nWe have received your order (${orderCode}). It is currently pending payment verification.\nPlease ensure the bank transfer remark includes the order code.\n\nThank you!`;
+
+  const productLines = products
+    .map(p => {
+      const pricePart = typeof p.price === 'number' ? ` — $${p.price.toFixed(2)}` : '';
+      return `- ${p.title} x${p.quantity}${pricePart}`;
+    })
+    .join('\n');
+
+  const body = `Hello ${customerName},
+
+Thank you for your order (${orderCode}).
+
+Order summary:
+${productLines}
+
+Total: $${total.toFixed(2)}
+
+You can view more details by logging into your account.
+
+Thanks for choosing Scentistry.`;
+
   await sendgrid.send({ to, from: fromEmail, subject: subj, text: body });
 }
 
