@@ -27,3 +27,20 @@ if (!getApps().length) {
 
 export const adminAuth = adminApp ? getAuth(adminApp) : undefined;
 export const adminDb = adminApp ? getFirestore(adminApp) : undefined;
+
+/**
+ * Returns a lightweight status object indicating whether Firebase Admin initialized,
+ * and whether required env vars were detected. Useful for health checks.
+ */
+export function getAdminInitStatus() {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKeyRaw = process.env.FIREBASE_PRIVATE_KEY;
+  const hasServiceEnv = Boolean(projectId && clientEmail && privateKeyRaw);
+  return {
+    initialized: Boolean(adminApp && adminDb),
+    hasServiceAccountEnv: hasServiceEnv,
+    usingADC: !hasServiceEnv,
+    projectId: projectId || process.env.GOOGLE_CLOUD_PROJECT || process.env.GCLOUD_PROJECT || undefined,
+  };
+}
