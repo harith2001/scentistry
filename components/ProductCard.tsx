@@ -10,6 +10,7 @@ export default function ProductCard({ product }: Props) {
   const { add } = useCart();
   const hasDiscount = typeof product.discountedPrice === 'number' && product.discountedPrice > 0 && product.discountedPrice < product.price;
   const effectivePrice = hasDiscount ? product.discountedPrice : product.price;
+  const hasSizeOptions = Array.isArray(product?.sizes) && product.sizes.length > 0;
   return (
     <div className="bg-white rounded-3xl border border-gold/15 shadow-soft hover:shadow-lux transition-all duration-300 p-4 sm:p-6 flex flex-col">
       <Link href={`/product/${product.id}`} className="block group" aria-label={product.title}>
@@ -38,16 +39,24 @@ export default function ProductCard({ product }: Props) {
         </div>
       </Link>
       <div className="mt-auto pt-4">
-        <Button
-          className="w-full"
-          variant="gold"
-          onClick={() => {
-            add({ id: product.id, title: product.title, price: effectivePrice, image: product.images?.[0], qty: 1 });
-            toast.success('Added to cart');
-          }}
-        >
-          Add to Cart
-        </Button>
+        {hasSizeOptions ? (
+          <Link href={`/product/${product.id}`} className="block">
+            <Button className="w-full" variant="gold">
+              Select Size
+            </Button>
+          </Link>
+        ) : (
+          <Button
+            className="w-full"
+            variant="gold"
+            onClick={() => {
+              add({ id: product.id, title: product.title, price: effectivePrice, image: product.images?.[0], qty: 1 });
+              toast.success('Added to cart');
+            }}
+          >
+            Add to Cart
+          </Button>
+        )}
       </div>
     </div>
   );

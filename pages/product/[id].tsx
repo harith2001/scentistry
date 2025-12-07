@@ -17,6 +17,7 @@ export default function ProductDetail() {
   const [dragStartX, setDragStartX] = useState<number | null>(null);
   const [dragDelta, setDragDelta] = useState(0);
   const { add } = useCart();
+  const [selectedSizeIndex, setSelectedSizeIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -35,7 +36,13 @@ export default function ProductDetail() {
   if (loading) return <div>Loading product…</div>;
   if (!product) return <div>Product not found.</div>;
   const hasDiscount = typeof product.discountedPrice === 'number' && product.discountedPrice > 0 && product.discountedPrice < product.price;
-  const effectivePrice = hasDiscount ? product.discountedPrice! : product.price;
+  const sizeOptions: Array<{ size: string; price: number }> = Array.isArray((product as any)?.sizes)
+    ? (((product as any).sizes as Array<{ size: string; price: number }>) || [])
+    : [];
+  const basePrice = hasDiscount ? product.discountedPrice! : product.price;
+  const effectivePrice = sizeOptions.length > 0
+    ? (selectedSizeIndex != null ? sizeOptions[selectedSizeIndex]?.price ?? NaN : NaN)
+    : basePrice;
 
   return (
     <div className="grid gap-8 md:grid-cols-2">
@@ -165,12 +172,34 @@ export default function ProductDetail() {
         ) : (
           <div className="text-gold text-2xl font-semibold mt-2">LKR {product.price.toFixed(2)}</div>
         )}
-        { (product.size || product.sku) && (
+        { (product.size || product.sku) && sizeOptions.length === 0 && (
           <div className="mt-1 text-sm text-black/70">Size: {product.size || product.sku}</div>
         ) }
         {product.limitedEdition && <div className="text-black/80 text-sm mt-1">Limited edition</div>}
         <div className="gold-divider my-4" />
         <p className="mt-4 text-black/75 whitespace-pre-line">{product.description}</p>
+
+        {/* Size selection when multiple sizes exist */}
+        {sizeOptions.length > 0 && (
+          <div className="mt-4">
+            <div className="font-medium text-black">Select Size</div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {sizeOptions.map((opt, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedSizeIndex(idx)}
+                  className={`px-3 py-1 rounded-full border ${selectedSizeIndex === idx ? 'border-gold bg-gold/10' : 'border-gold/30 bg-white'} text-sm`}
+                >
+                  {opt.size} — LKR {opt.price.toFixed(2)}
+                </button>
+              ))}
+            </div>
+            {selectedSizeIndex == null && (
+              <div className="mt-2 text-xs text-black/60">Please select a size to add to cart.</div>
+            )}
+          </div>
+        )}
         {product.ingredients && (
           <div className="mt-4">
             <div className="font-medium text-black">Ingredients</div>
@@ -186,8 +215,11 @@ export default function ProductDetail() {
           className="mt-6"
           variant="gold"
           size="lg"
+          disabled={sizeOptions.length > 0 && selectedSizeIndex == null}
           onClick={() => {
-            add({ id: product.id, title: product.title, price: effectivePrice, image: product.images?.[0], qty: 1 });
+            const chosenSize = sizeOptions.length > 0 && selectedSizeIndex != null ? sizeOptions[selectedSizeIndex] : null;
+            const titleWithSize = chosenSize ? `${product.title} (${chosenSize.size})` : product.title;
+            add({ id: product.id, title: titleWithSize, price: effectivePrice, image: product.images?.[0], qty: 1 });
             toast.success('Added to cart');
           }}
         >
