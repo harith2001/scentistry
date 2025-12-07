@@ -178,6 +178,10 @@ export default function ProductDetail() {
           </div>
         )}
 
+        <div className="mt-4 text-xs text-gold/70">
+          Please note: Colors may vary subtly with lighting and display settings.
+        </div>
+
         <Button
           className="mt-6"
           variant="gold"
