@@ -219,7 +219,8 @@ export default function ProductDetail() {
           onClick={() => {
             const chosenSize = sizeOptions.length > 0 && selectedSizeIndex != null ? sizeOptions[selectedSizeIndex] : null;
             const titleWithSize = chosenSize ? `${product.title} (${chosenSize.size})` : product.title;
-            add({ id: product.id, title: titleWithSize, price: effectivePrice, image: product.images?.[0], qty: 1 });
+            const key = chosenSize ? `${product.id}:${chosenSize.size}` : `${product.id}:${product.title}`;
+            add({ id: product.id, title: titleWithSize, price: effectivePrice, image: product.images?.[0], qty: 1, key });
             toast.success('Added to cart');
           }}
         >

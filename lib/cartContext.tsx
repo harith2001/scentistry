@@ -3,13 +3,13 @@ import { useAuth } from './authContext';
 import { collection, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from './firebaseClient';
 
-export interface CartItem { id: string; title: string; price: number; image?: string; qty: number; }
+export interface CartItem { id: string; title: string; price: number; image?: string; qty: number; key?: string }
 
 interface CartCtx {
   items: CartItem[];
   add: (item: CartItem) => void;
-  remove: (id: string) => void;
-  setQty: (id: string, qty: number) => void;
+  remove: (key: string) => void;
+  setQty: (key: string, qty: number) => void;
   clear: () => void;
   total: number;
 }
@@ -53,6 +53,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         price: typeof i.price === 'number' ? i.price : Number(i.price) || 0,
         qty: typeof i.qty === 'number' ? i.qty : Number(i.qty) || 1,
         ...(i.image ? { image: i.image } : {}),
+        ...(i.key ? { key: i.key } : {}),
       }));
       try {
         setDoc(cartRef, { items: safeItems }, { merge: true });
@@ -67,17 +68,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     items,
     add: (item: CartItem) => {
       setItems((prev: CartItem[]) => {
-        const idx = prev.findIndex((p: CartItem) => p.id === item.id);
+        const incomingKey = item.key || `${item.id}:${item.title}`;
+        const idx = prev.findIndex((p: CartItem) => (p.key || `${p.id}:${p.title}`) === incomingKey);
         if (idx >= 0) {
           const copy = [...prev];
           copy[idx] = { ...copy[idx], qty: copy[idx].qty + item.qty };
           return copy;
         }
-        return [...prev, item];
+        return [...prev, { ...item, key: incomingKey }];
       });
     },
-    remove: (id: string) => setItems((prev: CartItem[]) => prev.filter((p: CartItem) => p.id !== id)),
-    setQty: (id: string, qty: number) => setItems((prev: CartItem[]) => prev.map((p: CartItem) => p.id === id ? { ...p, qty } : p)),
+    remove: (key: string) => setItems((prev: CartItem[]) => prev.filter((p: CartItem) => (p.key || `${p.id}:${p.title}`) !== key)),
+    setQty: (key: string, qty: number) => setItems((prev: CartItem[]) => prev.map((p: CartItem) => ((p.key || `${p.id}:${p.title}`) === key ? { ...p, qty } : p))),
     clear: () => setItems([]),
     total: items.reduce((s: number, i: CartItem) => s + i.price * i.qty, 0)
   }), [items]);

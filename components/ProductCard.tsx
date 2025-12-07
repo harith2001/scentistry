@@ -50,7 +50,8 @@ export default function ProductCard({ product }: Props) {
             className="w-full"
             variant="gold"
             onClick={() => {
-              add({ id: product.id, title: product.title, price: effectivePrice, image: product.images?.[0], qty: 1 });
+              const key = `${product.id}:${product.title}`;
+              add({ id: product.id, title: product.title, price: effectivePrice, image: product.images?.[0], qty: 1, key });
               toast.success('Added to cart');
             }}
           >
