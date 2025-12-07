@@ -29,6 +29,11 @@ export default function AdminProductForm({ existing, onDone }: Props) {
     !!existing?.limitedEdition
   );
   const [size, setSize] = useState(existing?.size || existing?.sku || "");
+  const [sizes, setSizes] = useState<Array<{ size: string; price: string }>>(
+    existing?.size || existing?.price
+      ? [{ size: existing?.size || existing?.sku || "", price: existing?.price?.toString() || "" }]
+      : []
+  );
   const [saving, setSaving] = useState(false);
 
   const submit = async (e: FormEvent) => {
@@ -36,6 +41,10 @@ export default function AdminProductForm({ existing, onDone }: Props) {
     setSaving(true);
     try {
       const priceNum = parseFloat(price) || 0;
+      // Prepare structured sizes array (price stored as number)
+      const normalizedSizes = sizes
+        .map(sp => ({ size: sp.size.trim(), price: parseFloat(sp.price || "0") || 0 }))
+        .filter(sp => sp.size && sp.price > 0);
       const discountedNum = discountedPrice === "" ? undefined : Math.max(0, parseFloat(discountedPrice) || 0);
       if (discountedNum !== undefined && discountedNum >= priceNum) {
         toast.error("Discounted price must be less than original price");
@@ -45,6 +54,7 @@ export default function AdminProductForm({ existing, onDone }: Props) {
       const data = {
         title: title.trim(),
         price: priceNum,
+        sizes: normalizedSizes,
         stock: parseInt(stock || "0", 10),
         description: description.trim(),
         ingredients: ingredients.trim(),
@@ -63,9 +73,9 @@ export default function AdminProductForm({ existing, onDone }: Props) {
           .map((s) => s.trim())
           .filter(Boolean),
         limitedEdition,
-        size: size.trim(),
+        size: (normalizedSizes[0]?.size || size).trim(),
         // keep writing legacy sku for now for older data compatibility
-        sku: size.trim(),
+        sku: (normalizedSizes[0]?.size || size).trim(),
         updatedAt: new Date().toISOString(),
         ...(discountedNum !== undefined ? { discountedPrice: discountedNum } : {}),
       };
@@ -136,9 +146,10 @@ export default function AdminProductForm({ existing, onDone }: Props) {
         value={title}
         onChange={(e) => setTitle(e.target.value)}
       />
+      {/* Base price (legacy, uses first size if provided) */}
       <input
         className="border rounded px-3 py-2 w-full"
-        placeholder="Price"
+        placeholder="Base Price (used if sizes empty)"
         type="number"
         value={price}
         onChange={(e) => setPrice(e.target.value)}
@@ -236,12 +247,74 @@ export default function AdminProductForm({ existing, onDone }: Props) {
         value={moods}
         onChange={(e) => setMoods(e.target.value)}
       />
-      <input
-        className="border rounded px-3 py-2 w-full"
-        placeholder="Size (e.g. Large - 2 x 4 cm)"
-        value={size}
-        onChange={(e) => setSize(e.target.value)}
-      />
+      {/* Multiple size-price rows */}
+      <div className="space-y-2">
+        <div className="text-sm font-medium">Sizes & Prices</div>
+        {sizes.map((sp, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <input
+              className="border rounded px-3 py-2 w-full"
+              placeholder="Size (e.g. Large)"
+              value={sp.size}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSizes(prev => prev.map((p, i) => i === idx ? { ...p, size: v } : p));
+              }}
+            />
+            <input
+              className="border rounded px-3 py-2 w-40"
+              placeholder="Price"
+              type="number"
+              value={sp.price}
+              onChange={(e) => {
+                const v = e.target.value;
+                setSizes(prev => prev.map((p, i) => i === idx ? { ...p, price: v } : p));
+              }}
+            />
+            <button
+              type="button"
+              className="px-3 py-2 border rounded"
+              onClick={() => setSizes(prev => prev.filter((_, i) => i !== idx))}
+            >
+              Remove
+            </button>
+          </div>
+        ))}
+        <div className="flex items-center gap-2">
+          <input
+            className="border rounded px-3 py-2 w-full"
+            placeholder="Size (e.g. Large)"
+            value={size}
+            onChange={(e) => setSize(e.target.value)}
+          />
+          <input
+            className="border rounded px-3 py-2 w-40"
+            placeholder="Price"
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
+          <button
+            type="button"
+            className="px-3 py-2 bg-brand text-white rounded"
+            onClick={() => {
+              if (!size.trim() || !(parseFloat(price) > 0)) {
+                toast.error("Enter size and a valid price");
+                return;
+              }
+              const wasEmpty = sizes.length === 0;
+              setSizes(prev => [...prev, { size: size.trim(), price }]);
+              if (wasEmpty) {
+                // Keep legacy defaults aligned to the first added entry
+                setSize(size.trim());
+              }
+            }}
+          >
+            + Add
+          </button>
+        </div>
+        <p className="text-xs text-gray-500">Tip: Add multiple size and price combinations. The first entry will be used as the default legacy size and price for compatibility.</p>
+      </div>
       <label className="flex items-center gap-2 text-sm">
         <input
           type="checkbox"
