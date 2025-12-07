@@ -45,15 +45,17 @@ export default function AdminProductForm({ existing, onDone }: Props) {
       const normalizedSizes = sizes
         .map(sp => ({ size: sp.size.trim(), price: parseFloat(sp.price || "0") || 0 }))
         .filter(sp => sp.size && sp.price > 0);
+      const baseForValidation = normalizedSizes[0]?.price ?? priceNum;
       const discountedNum = discountedPrice === "" ? undefined : Math.max(0, parseFloat(discountedPrice) || 0);
-      if (discountedNum !== undefined && discountedNum >= priceNum) {
+      if (discountedNum !== undefined && baseForValidation > 0 && discountedNum >= baseForValidation) {
         toast.error("Discounted price must be less than original price");
         setSaving(false);
         return;
       }
       const data = {
         title: title.trim(),
-        price: priceNum,
+        // Ensure legacy price is populated when sizes exist
+        price: normalizedSizes[0]?.price ?? priceNum,
         sizes: normalizedSizes,
         stock: parseInt(stock || "0", 10),
         description: description.trim(),
@@ -307,6 +309,7 @@ export default function AdminProductForm({ existing, onDone }: Props) {
               if (wasEmpty) {
                 // Keep legacy defaults aligned to the first added entry
                 setSize(size.trim());
+                setPrice(price);
               }
             }}
           >
