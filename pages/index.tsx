@@ -59,6 +59,24 @@ export default function Home() {
     return list;
   }, [products, qText, sortMode]);
 
+  const categorized = useMemo(() => {
+    const hasValidDiscount = (p: any) => typeof p.discountedPrice === 'number' && p.discountedPrice > 0 && p.discountedPrice < p.price;
+    const isSeasonSpecial = (p: Product) => {
+      const title = (p.title || '').toLowerCase();
+      const moods = (p.moods || []).map(m => m.toLowerCase());
+      // Heuristics: title or mood includes season/seasonal
+      return title.includes('season') || title.includes('seasonal') || moods.some(m => m.includes('season'));
+    };
+
+    const scented = filtered.filter(p => (p.scents || []).length > 0);
+    const unscented = filtered.filter(p => (p.scents || []).length === 0);
+    const discount = filtered.filter(p => hasValidDiscount(p as any));
+    const limited = filtered.filter(p => !!p.limitedEdition);
+    const season = filtered.filter(p => isSeasonSpecial(p));
+
+    return { season, scented, unscented, discount, limited };
+  }, [filtered]);
+
   return (
     <div className="space-y-8">
       <Hero />
@@ -91,14 +109,62 @@ export default function Home() {
       {loading ? (
         <div className="text-center text-black/60">Loading Home</div>
       ) : (
-        <div id="products" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          {filtered.map(p => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-          {filtered.length === 0 && (
-            <div className="col-span-full text-center text-black/60">No products found.</div>
-          )}
-        </div>
+        <>
+          {/* Season Special */}
+          <section className="space-y-4">
+            <SectionHeading title="Season Special" subtitle="Limited-time selections inspired by the season." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {categorized.season.map(p => (<ProductCard key={`season-${p.id}`} product={p} />))}
+              {categorized.season.length === 0 && (
+                <div className="col-span-full text-center text-black/60">No season specials available.</div>
+              )}
+            </div>
+          </section>
+
+          {/* Scented candles */}
+          <section className="space-y-4">
+            <SectionHeading title="Scented Candles" subtitle="Fragrant blends for mood and ambiance." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {categorized.scented.map(p => (<ProductCard key={`scented-${p.id}`} product={p} />))}
+              {categorized.scented.length === 0 && (
+                <div className="col-span-full text-center text-black/60">No scented candles found.</div>
+              )}
+            </div>
+          </section>
+
+          {/* Unscented candles */}
+          <section className="space-y-4">
+            <SectionHeading title="Unscented Candles" subtitle="Minimal, clean burn — perfect for calm spaces." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {categorized.unscented.map(p => (<ProductCard key={`unscented-${p.id}`} product={p} />))}
+              {categorized.unscented.length === 0 && (
+                <div className="col-span-full text-center text-black/60">No unscented candles found.</div>
+              )}
+            </div>
+          </section>
+
+          {/* Discount candles */}
+          <section className="space-y-4">
+            <SectionHeading title="Discount Candles" subtitle="Special prices, same refined quality." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {categorized.discount.map(p => (<ProductCard key={`discount-${p.id}`} product={p} />))}
+              {categorized.discount.length === 0 && (
+                <div className="col-span-full text-center text-black/60">No discounted candles right now.</div>
+              )}
+            </div>
+          </section>
+
+          {/* Limited edition candles */}
+          <section className="space-y-4">
+            <SectionHeading title="Limited Edition" subtitle="Small-batch releases — available while stocks last." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+              {categorized.limited.map(p => (<ProductCard key={`limited-${p.id}`} product={p} />))}
+              {categorized.limited.length === 0 && (
+                <div className="col-span-full text-center text-black/60">No limited editions at the moment.</div>
+              )}
+            </div>
+          </section>
+        </>
       )}
     </div>
   );
