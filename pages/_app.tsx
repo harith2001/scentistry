@@ -32,7 +32,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
                   <p className="text-sm text-black/70">Premium candles crafted with care. Illuminate your moments.</p>
                   <div className="mt-4 space-y-1 text-sm">
                     <a href="mailto:scentistryc@gmail.com" className="block text-gold hover:underline">scentistryc@gmail.com</a>
-                    <a href="tel:+9477888888800000" className="block text-gold hover:underline">+9477888888800000</a>
+                    <a href="tel:+9477888888800000" className="block text-gold hover:underline">+94-76-357-2221</a>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-6 sm:col-span-2 sm:grid-cols-3">

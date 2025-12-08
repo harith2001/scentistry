@@ -145,7 +145,7 @@ export default function Home() {
 
           {/* Discount candles */}
           <section className="space-y-4">
-            <SectionHeading title="Discount Candles" subtitle="Special prices, same refined quality." />
+            <SectionHeading title="Discounted Candles" subtitle="Special prices, same refined quality." />
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
               {categorized.discount.map(p => (<ProductCard key={`discount-${p.id}`} product={p} />))}
               {categorized.discount.length === 0 && (
